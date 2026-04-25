@@ -21,6 +21,35 @@ source "$emudeckBackend"/functions/helperFunctions.sh
 
 
 
+# ── macOS: guard against empty/corrupt settings files BEFORE sourcing ─────────
+# Root cause of "ROM dirs scattered in $HOME": a stale empty settings.sh (only
+# #!/bin/bash, no romsPath) gets sourced → all $vars empty → mkdir "$romsPath/snes"
+# expands to mkdir "/snes" or falls back to $HOME/snes. Purge it now.
+if [ "$(uname)" != "Linux" ]; then
+    _darwin_home_settings="$HOME/emudeck/settings.sh"
+    # Purge if it exists but contains no romsPath= line
+    if [ -f "$_darwin_home_settings" ] && ! grep -q "^[[:space:]]*romsPath=" "$_darwin_home_settings" 2>/dev/null; then
+        echo "[EmuDeck] Purging empty/corrupt $_darwin_home_settings (no romsPath) — will re-seed." >&2
+        rm -f "$_darwin_home_settings"
+    fi
+    # Re-seed if still missing
+    if [ ! -f "$_darwin_home_settings" ]; then
+        mkdir -p "$HOME/emudeck"
+        cat > "$_darwin_home_settings" <<DARWIN_DEFAULTS
+#!/bin/bash
+system="darwin"
+emulationPath="$HOME/Emulation"
+romsPath="$HOME/Emulation/roms"
+toolsPath="$HOME/Emulation/tools"
+biosPath="$HOME/Emulation/bios"
+savesPath="$HOME/Emulation/saves"
+storagePath="$HOME/Emulation/storage"
+DARWIN_DEFAULTS
+        echo "[EmuDeck] settings.sh seeded with macOS defaults." >&2
+    fi
+fi
+# ──────────────────────────────────────────────────────────────────────────────
+
 SETTINGSFILE="$emudeckFolder/settings.sh"
 if [ -f "$SETTINGSFILE" ] &&  [ ! -L "$SETTINGSFILE" ]; then
     # shellcheck source=./settings.sh
@@ -28,6 +57,25 @@ if [ -f "$SETTINGSFILE" ] &&  [ ! -L "$SETTINGSFILE" ]; then
 else
     source "$HOME/emudeck/settings.sh"
 fi
+
+# ── HARD GUARD: abort if any critical path is empty after sourcing ────────────
+# This prevents any downstream mkdir/cp/rsync from writing to the wrong location.
+if [ -z "${romsPath:-}" ] || [ -z "${emulationPath:-}" ] || [ -z "${biosPath:-}" ] || [ -z "${savesPath:-}" ]; then
+    _err="EmuDeck: settings file is invalid (critical paths empty). To recover, delete ~/.config/EmuDeck and ~/emudeck, then re-run EmuDeck. The current operation has been aborted to prevent file scatter."
+    echo "FATAL: $_err" >&2
+    if [ "$(uname)" != "Linux" ]; then
+        osascript -e "display alert \"EmuDeck install aborted\" message \"$_err\" as critical" 2>/dev/null || true
+    fi
+    exit 1
+fi
+# Guard: romsPath must live under $HOME, /Volumes (external Mac drive), or /run/media (Linux SD)
+case "$romsPath" in
+    "$HOME"/* | /Volumes/* | /run/media/*) : ;;
+    *)
+        echo "FATAL: romsPath ($romsPath) is not under \$HOME, /Volumes, or /run/media — refusing to proceed." >&2
+        exit 1 ;;
+esac
+# ──────────────────────────────────────────────────────────────────────────────
 
 if [ "$system" != "darwin" ]; then
     export PATH="$emudeckBackend/tools/binaries/:$PATH"
