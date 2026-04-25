@@ -11,12 +11,41 @@ echo "0" > "$MSG"
 
 #Darwin
 appleChip=$(uname -m)
-if [ $(uname) != "Linux" ]; then
-	if [ $appleChip = 'arm64' ]; then
+if [ "$(uname)" != "Linux" ]; then
+	# Auto-install gnu-sed via Homebrew if not already present
+	if ! command -v gsed >/dev/null 2>&1; then
+		if command -v brew >/dev/null 2>&1; then
+			echo "[EmuDeck] Installing gnu-sed (required on macOS)..."
+			brew install gnu-sed || { echo "ERROR: brew install gnu-sed failed. Install Homebrew from https://brew.sh first."; exit 1; }
+		else
+			echo "ERROR: Homebrew is required on macOS to run EmuDeck. Install it from https://brew.sh and re-run."
+			exit 1
+		fi
+	fi
+	if [ "$appleChip" = 'arm64' ]; then
 		PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
 	else
 		PATH="/usr/local/opt/gnu-sed/libexec/gnubin:$PATH"
 	fi
+	export PATH
+
+	# Pre-seed ~/emudeck/settings.sh with macOS defaults if the file is missing or empty
+	mkdir -p "$HOME/emudeck"
+	if [ ! -s "$HOME/emudeck/settings.sh" ]; then
+		cat > "$HOME/emudeck/settings.sh" <<'DARWIN_SETTINGS'
+system="darwin"
+Home="$HOME"
+emulationPath="$HOME/Emulation"
+romsPath="$HOME/Emulation/roms"
+toolsPath="$HOME/Emulation/tools"
+biosPath="$HOME/Emulation/bios"
+savesPath="$HOME/Emulation/saves"
+storagePath="$HOME/Emulation/storage"
+DARWIN_SETTINGS
+	fi
+
+	# Decky Loader is Linux/SteamOS-only — disable on macOS
+	doInstallRetroLibrary=false
 fi
 
 #

@@ -93,7 +93,10 @@ function getSDPath(){
 }
 
 function getProductName(){
-	cat /sys/devices/virtual/dmi/id/product_name
+	# Linux-only DMI probe — return empty string on macOS/Darwin to avoid errors
+	if [ "$(uname)" = "Linux" ]; then
+		cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null || true
+	fi
 }
 
 function testRealDeck(){
