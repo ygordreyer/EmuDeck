@@ -1,6 +1,182 @@
 #!/bin/bash
 . "$HOME/.config/EmuDeck/backend/functions/all.sh"
 
+# ══════════════════════════════════════════════════════════════════════════════
+# macOS UNINSTALLER — runs instead of the Linux/zenity path below
+# ══════════════════════════════════════════════════════════════════════════════
+if [ "$(uname)" != "Linux" ]; then
+
+LOGFILE="$HOME/Desktop/emudeck-uninstall-$(date +%Y%m%d-%H%M%S).log"
+exec > >(tee -a "$LOGFILE") 2>&1
+echo "EmuDeck macOS uninstaller — $(date)"
+echo "emulationPath : ${emulationPath:-$HOME/Emulation}"
+echo "romsPath      : ${romsPath:-$HOME/Emulation/roms}"
+
+# ── osascript dialog helper ───────────────────────────────────────────────────
+_ask() {
+    local msg="$1" yes_btn="${2:-Yes}" no_btn="${3:-No}" result
+    result=$(osascript -e "
+        tell application \"System Events\"
+            set d to display dialog \"${msg//\"/\\\"}\" buttons {\"${no_btn}\", \"${yes_btn}\"} default button \"${no_btn}\" with icon caution
+            return button returned of d
+        end tell
+    " 2>/dev/null) || { echo "[warn] Dialog failed — defaulting to No." ; return 1 ; }
+    [ "$result" = "$yes_btn" ]
+}
+
+# ── Delete helper ─────────────────────────────────────────────────────────────
+_rm() {
+    local t="$1" label="${2:-$1}"
+    if [ ! -e "$t" ] && [ ! -L "$t" ]; then
+        echo "  [skip] not found: $label"
+        return
+    fi
+    rm -rf "$t"
+    echo "  [ok] removed: $label"
+}
+
+# ── Confirm ───────────────────────────────────────────────────────────────────
+if ! _ask "Are you sure you want to uninstall EmuDeck from this Mac?\n\nThis will remove the app, emulators, and config data.\nYou will be asked about your ROMs, saves, and BIOS separately." \
+        "Yes, uninstall EmuDeck" "Cancel"; then
+    echo "Uninstall cancelled."
+    exit 0
+fi
+
+# ── Optional: backup saves ────────────────────────────────────────────────────
+_savesPath="${savesPath:-$HOME/Emulation/saves}"
+_emulationPath="${emulationPath:-$HOME/Emulation}"
+
+if [ -d "$_savesPath" ] && _ask "Back up saves before uninstalling?\n\nThey will be zipped to:\n$_emulationPath/EmuDeckSavesBackup.zip" \
+        "Yes, back up saves" "Skip"; then
+    echo "[mac] Zipping saves..."
+    zip -rq "$_emulationPath/EmuDeckSavesBackup.zip" "$_savesPath" \
+        && echo "  [ok] Saves backed up → $_emulationPath/EmuDeckSavesBackup.zip" \
+        || echo "  [warn] Save backup failed — continuing."
+fi
+
+# ── Optional: backup BIOS ─────────────────────────────────────────────────────
+_biosPath="${biosPath:-$HOME/Emulation/bios}"
+if [ -d "$_biosPath" ] && _ask "Back up BIOS files before uninstalling?\n\nThey will be zipped to:\n$_emulationPath/EmuDeckBIOSBackup.zip" \
+        "Yes, back up BIOS" "Skip"; then
+    echo "[mac] Zipping BIOS..."
+    zip -rq "$_emulationPath/EmuDeckBIOSBackup.zip" "$_biosPath" \
+        && echo "  [ok] BIOS backed up → $_emulationPath/EmuDeckBIOSBackup.zip" \
+        || echo "  [warn] BIOS backup failed — continuing."
+fi
+
+# ── Step 1: EmuDeck app ───────────────────────────────────────────────────────
+echo ""; echo "== Step 1: EmuDeck app =="
+_rm "/Applications/EmuDeck.app"
+_rm "$HOME/Applications/EmuDeck"
+_rm "/Applications/RetroArch.app"
+
+# ── Step 2: Emulator app data ─────────────────────────────────────────────────
+echo ""; echo "== Step 2: Emulator app data =="
+_APP="$HOME/Library/Application Support"
+for _e in RetroArch Dolphin DolphinEmu PPSSPP DuckStation melonDS PCSX2 RPCS3 Citra Cemu Ryujinx Xemu Flycast ScummVM mGBA Vita3K ares; do
+    _rm "$_APP/$_e" "~/Library/Application Support/$_e"
+done
+for _e in dolphin-emu ppsspp duckstation melonds PCSX2 rpcs3; do
+    _rm "$HOME/.config/$_e" "~/.config/$_e"
+done
+
+# ── Step 3: EmuDeck config & backend ─────────────────────────────────────────
+echo ""; echo "== Step 3: EmuDeck config & backend =="
+_rm "$HOME/.config/EmuDeck"              "~/.config/EmuDeck (backend + config)"
+_rm "$HOME/.config/steam-rom-manager"    "~/.config/steam-rom-manager"
+_rm "$HOME/.steam"                        "~/.steam"
+_rm "$_APP/EmuDeck"                       "~/Library/Application Support/EmuDeck"
+_rm "$HOME/emudeck"                       "~/emudeck (settings, logs, store)"
+
+# ── Step 4: Emulation folder ─────────────────────────────────────────────────
+echo ""; echo "== Step 4: Emulation folder =="
+_toolsPath="${toolsPath:-$HOME/Emulation/tools}"
+_storagePath="${storagePath:-$HOME/Emulation/storage}"
+
+if _ask "Remove the entire Emulation folder?\n\n$_emulationPath\n\nThis contains your ROMs, tools, and (if not backed up) saves and BIOS.\n\nThis CANNOT be undone." \
+        "Yes, remove Emulation folder" "Keep it"; then
+    _rm "$_emulationPath" "Emulation folder"
+else
+    echo "  [keep] Keeping $_emulationPath"
+    _rm "$_toolsPath"   "tools folder"
+    _rm "$_storagePath" "storage folder"
+fi
+
+# ── Step 5: Rogue $HOME ROM dirs from mis-install ─────────────────────────────
+echo ""; echo "== Step 5: Rogue ROM dirs in \$HOME =="
+_BACKEND_ROMS="$HOME/.config/EmuDeck/backend/roms"
+_ROM_DIRS=()
+if [ -d "$_BACKEND_ROMS" ]; then
+    while IFS= read -r _line; do _ROM_DIRS+=("$_line"); done < <(ls "$_BACKEND_ROMS")
+else
+    _ROM_DIRS=(3do ags amiga amiga600 amiga1200 amigacd32 amstradcpc android apple2 apple2gs
+        arcade arcadia arduboy astrocde atari2600 atari5200 atari7800 atari800
+        atarijaguar atarijaguarcd atarilynx atarist atarixe atomiswave bbcmicro
+        c16 c64 cavestory cdimono1 cdtv chailove channelf cloud coco colecovision
+        cps cps1 cps2 cps3 crvision daphne doom dos dragon32 dreamcast easyrpg
+        emulators epic famicom fba fbneo fds flash fmtowns gameandwatch gamecom
+        gamegear gb gba gbc gc generic-applications genesis genesiswide gx4000
+        intellivision j2me kodi lcdgames lutris lutro macintosh mame mame-advmame
+        mame-mame4all mastersystem megacd megacdjp megadrive megadrivejp megaduck
+        mess model2 model3 moonlight moto msx msx1 msx2 msxturbor mugen multivision
+        n3ds n64 n64dd naomi naomi2 naomigd nds neogeo neogeocd neogeocdjp nes ngp
+        ngpc odyssey2 openbor oric palm pc pc88 pc98 pcengine pcenginecd pcfx pico8
+        pokemini ports primehacks ps2 ps3 ps4 psp psvita psx pv1000 quake remoteplay
+        samcoupe satellaview saturn saturnjp scummvm sega32x sega32xjp sega32xna
+        segacd sfc sg-1000 sgb snes sneshd snesna solarus spectravideo steam stratagus
+        sufami supergrafx supervision switch symbian tanodragon tg-cd tg16 ti99 tic80
+        to8 trs-80 uzebox vectrex vic20 videopac virtualboy vsmile wasm4 wii wiiu
+        wonderswan wonderswancolor x1 x68000 xbox xbox360 zmachine zx81 zxspectrum)
+fi
+
+# macOS system folders to never touch (case-insensitive HFS+ guard)
+_PROTECTED=(Desktop Documents Downloads Library Movies Music Pictures Public Applications GitHub Perforce)
+
+_rogue_count=0; _skip_count=0
+for _dir in "${_ROM_DIRS[@]}"; do
+    _target="$HOME/$_dir"
+    [ -d "$_target" ] || continue
+
+    _name_lc=$(basename "$_target" | tr '[:upper:]' '[:lower:]')
+    _protected=false
+    for _p in "${_PROTECTED[@]}"; do
+        _p_lc=$(echo "$_p" | tr '[:upper:]' '[:lower:]')
+        if [ "$_name_lc" = "$_p_lc" ]; then
+            echo "  [PROTECTED] skipping: $_target"
+            _protected=true; (( _skip_count++ )) || true; break
+        fi
+    done
+    $_protected && continue
+
+    _extra=$(find "$_target" -maxdepth 3 -type f ! -name "metadata.txt" ! -name "systeminfo.txt" | wc -l | tr -d ' ')
+    if [ "$_extra" -gt 0 ]; then
+        echo "  [skip] ~/$_dir — has $_extra real file(s)"
+        (( _skip_count++ )) || true
+    else
+        rm -rf "$_target"
+        echo "  [ok] removed rogue dir: ~/$_dir"
+        (( _rogue_count++ )) || true
+    fi
+done
+echo "  Rogue dirs removed: $_rogue_count | skipped: $_skip_count"
+
+# ── Done ─────────────────────────────────────────────────────────────────────
+echo ""; echo "== Done =="
+echo "EmuDeck has been uninstalled from this Mac."
+echo "Log: $LOGFILE"
+echo ""
+echo "To re-install, download EmuDeck.dmg from:"
+echo "  https://github.com/ygordreyer/emudeck-electron-beta/releases"
+echo ""
+echo "After installing the .dmg, run:"
+echo "  xattr -cr /Applications/EmuDeck.app"
+
+exit 0
+fi # end macOS branch
+# ══════════════════════════════════════════════════════════════════════════════
+# Linux/SteamOS path continues below
+# ══════════════════════════════════════════════════════════════════════════════
+
 doUninstall=false
 doUninstallares=true
 doUninstallBigPEmu=true
