@@ -435,8 +435,10 @@ Cemu_install_mac(){
 	local url
 	if [ "$arch" = "arm64" ]; then
 		url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos-arm64\.zip" "cemu-.*macos.*\.zip")
+		echo "[mac] Note: Cemu macOS build is universal (arm64 native if available, otherwise x64 via Rosetta 2)."
 	else
 		url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos-x64\.zip" "cemu-.*macos.*\.zip")
+		echo "[mac] Note: Installing Cemu x64 macOS build."
 	fi
 	if [ -z "$url" ]; then
 		echo "[mac] ERROR: Could not find Cemu macOS release."
