@@ -12,6 +12,54 @@ echo "0" > "$MSG"
 #Darwin
 appleChip=$(uname -m)
 if [ "$(uname)" != "Linux" ]; then
+
+	# ── C1: Re-exec under Homebrew bash 5+ (macOS ships bash 3.2 which lacks declare -A) ──
+	if [ -z "${EMUDECK_BASH_REEXEC:-}" ] && [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
+		if ! command -v brew >/dev/null 2>&1; then
+			echo "ERROR: Homebrew is required on macOS. Install it from https://brew.sh and re-run."
+			exit 1
+		fi
+		if ! command -v bash >/dev/null 2>&1 || ! bash --version 2>/dev/null | grep -q 'version [4-9]'; then
+			echo "[EmuDeck] Installing bash 5+ (macOS ships bash 3.2 which is too old)..."
+			brew install bash || { echo "ERROR: brew install bash failed."; exit 1; }
+		fi
+		BREW_BASH="$(brew --prefix bash)/bin/bash"
+		if [ -x "$BREW_BASH" ]; then
+			echo "[EmuDeck] Re-executing under bash 5+ ($BREW_BASH)..."
+			export EMUDECK_BASH_REEXEC=1
+			exec "$BREW_BASH" "$0" "$@"
+		fi
+	fi
+
+	# ── C2: Ensure rsync 3.2+ is available (macOS ships BSD rsync 2.6.9 which lacks --mkpath) ──
+	if ! rsync --help 2>&1 | grep -q -- '--mkpath'; then
+		if ! command -v brew >/dev/null 2>&1; then
+			echo "ERROR: Homebrew is required on macOS. Install it from https://brew.sh and re-run."
+			exit 1
+		fi
+		echo "[EmuDeck] Installing rsync 3+ (macOS ships BSD rsync 2.6.9 which lacks --mkpath)..."
+		brew install rsync || { echo "ERROR: brew install rsync failed."; exit 1; }
+	fi
+	# Prepend Homebrew rsync to PATH so all downstream rsync calls use it
+	PATH="$(brew --prefix rsync)/bin:$PATH"
+
+	# ── C3: Self-heal stale backend (wrong remote or missing darwin/ dir) ──
+	# Handles the case where the user ran setup.sh directly against a stale upstream clone.
+	_WANTED_REMOTE="https://github.com/ygordreyer/EmuDeck.git"
+	if [ -d "${emudeckBackend}/.git" ]; then
+		_cur_remote=$(cd "$emudeckBackend" && git config --get remote.origin.url 2>/dev/null || true)
+		if [ "$_cur_remote" != "$_WANTED_REMOTE" ] || [ ! -d "${emudeckBackend}/darwin" ]; then
+			echo "[EmuDeck] Backend is stale or wrong remote (found: ${_cur_remote:-none}) — refreshing from $_WANTED_REMOTE..."
+			cd "$emudeckBackend"
+			git remote set-url origin "$_WANTED_REMOTE"
+			git fetch --depth=1 origin "${1:-main}"
+			git reset --hard "origin/${1:-main}"
+			# Re-exec so we run the freshly-pulled setup.sh, not the stale one.
+			export EMUDECK_BASH_REEXEC=1
+			exec "${BASH:-bash}" "$0" "$@"
+		fi
+	fi
+
 	# Auto-install gnu-sed via Homebrew if not already present
 	if ! command -v gsed >/dev/null 2>&1; then
 		if command -v brew >/dev/null 2>&1; then
@@ -131,6 +179,18 @@ if [ -d "$FOLDER" ]; then
 fi
 sleep 1
 SECONDTIME="$emudeckFolder/.finished"
+
+# ── C4: macOS environment diagnostic — shows in every log for easy debugging ──────────────
+if [ "$(uname)" != "Linux" ]; then
+	echo "==== EmuDeck macOS environment ===="
+	echo "bash:   $BASH ($BASH_VERSION)"
+	echo "rsync:  $(command -v rsync 2>/dev/null || echo 'NOT FOUND') — $(rsync --version 2>/dev/null | head -1 || echo 'N/A')"
+	echo "remote: $(cd "$emudeckBackend" && git config --get remote.origin.url 2>/dev/null || echo 'N/A')"
+	echo "HEAD:   $(cd "$emudeckBackend" && git rev-parse --short HEAD 2>/dev/null || echo 'N/A')"
+	echo "system: ${system:-unknown (settings.sh not yet sourced)}"
+	echo "===================================="
+fi
+# ─────────────────────────────────────────────────────────────────────────────────────────
 
 #Lets log github API limits just in case
 echo 'Github API limits:'
