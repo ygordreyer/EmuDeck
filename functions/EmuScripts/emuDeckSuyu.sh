@@ -4,6 +4,7 @@
 suyu_emuName="suyu"
 suyu_emuType="$emuDeckEmuTypeAppImage"
 suyu_emuPath="$emusFolder/suyu.AppImage"
+# macOS: suyu is archived and has no macOS build — skipped on macOS
 
 suyu_configFile="$HOME/.config/suyu/qt-config.ini"
 
@@ -44,6 +45,7 @@ suyu_regions=(
 
 #Install
 suyu_install() {
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "suyu" "Archived emulator — no macOS build available"; return 0; fi
     echo "Begin suyu Install"
 
     local showProgress=$1

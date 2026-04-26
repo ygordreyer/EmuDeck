@@ -4,8 +4,11 @@
 Citron_emuName="citron"
 Citron_emuType="$emuDeckEmuTypeAppImage"
 Citron_emuPath="$emusFolder/citron.AppImage"
-
 Citron_configFile="$HOME/.config/citron/qt-config.ini"
+
+# macOS-specific paths
+Citron_configPath_mac="${HOME}/Library/Application Support/citron"
+Citron_configFile_mac="${HOME}/Library/Application Support/citron/qt-config.ini"
 
 # https://github.com/citron-emu/citron/blob/master/src/core/file_sys/control_metadata.cpp#L41-L60
 declare -A Citron_languages
@@ -21,9 +24,8 @@ Citron_languages=(
 ["nl"]=8
 ["pt"]=9
 ["ru"]=10
-["tw"]=11) # TODO: not all langs but we need to switch to full lang codes to support those
+["tw"]=11)
 
-# https://github.com/citron-emu/citron/blob/master/src/citron/configuration/configure_system.ui#L272-L309
 declare -A Citron_regions
 Citron_regions=(
 ["ja"]=0 # Japan
@@ -38,228 +40,226 @@ Citron_regions=(
 ["pt"]=2 # Europe
 ["ru"]=2 # Europe?
 ["tw"]=6 # Taiwan
-) # TODO: split lang from region?
+)
 
 #cleanupOlderThings
 Citron_cleanup() {
-    echo "Begin Citron Cleanup"
-    #Fixes repeated Symlink for older installations
+	echo "Begin Citron Cleanup"
 }
 
 #Install
 Citron_install() {
-  setMSG "Begin Citron Install"
+	if [ "$(uname)" != "Linux" ]; then Citron_install_mac "$@"; return $?; fi
+	setMSG "Begin Citron Install"
+	# Linux install NYI upstream — placeholder
+	echo "[citron] Linux install not yet implemented upstream."
+}
 
-  local showProgress=$1
-
-  # Llamada a la API para obtener la última release
-#   local response=$(curl -s "https://git.citron-emu.org/api/v1/repos/Citron/Citron/releases")
-#
-#   if installEmuBI "$Citron_emuName" "$( echo "$response" | jq -r '.[0].assets[] | select(.name | contains("Linux")) | .browser_download_url ' | head -n 1)" "$Citron_emuName" "tar.gz" "$showProgress"; then
-#     mkdir -p "$emusFolder/citron"
-#     tar -xvf "$emusFolder/$Citron_emuName.tar.gz" --strip-components=1 -C "$emusFolder/citron" && rm -rf "$HOME/Applications/$Citron_emuName.tar.gz"
-#     chmod +x "$emusFolder/citron/citron"
-#   else
-#     return 1
-#   fi
-
-#     local success="false"
-#     if installEmuAI "$Citron_emuName" "$(getReleaseURLGH "citron-appimage/citron-appimage" "AppImage")" "" "$showProgress" "" ""; then
-#         success="true"
-#     fi
-#
-#     if [ "$success" != "true" ]; then
-#         return 1
-#     fi
-
+Citron_install_mac(){
+	setMSG "Installing Citron (macOS)"
+	local arch
+	arch=$(mac_arch)
+	local url
+	if [ "$arch" = "arm64" ]; then
+		url=$(mac_get_gh_release_url "citron-emu/citron" "citron-.*macos-arm64.*\.dmg" "citron-.*macos.*\.dmg")
+	else
+		url=$(mac_get_gh_release_url "citron-emu/citron" "citron-.*macos-x86_64.*\.dmg" "citron-.*macos.*\.dmg")
+	fi
+	if [ -z "$url" ]; then
+		echo "[mac] ERROR: Could not find Citron macOS release."
+		return 1
+	fi
+	mac_install_dmg "Citron" "$url" "Citron.app" || return 1
+	mac_deploy_launcher "citron" "/Applications/Citron.app"
 }
 
 #ApplyInitialSettings
 Citron_init() {
-    echo "Begin Citron Init"
-
+	if [ "$(uname)" != "Linux" ]; then Citron_init_mac; return $?; fi
+	echo "Begin Citron Init"
 	cp "$emudeckBackend/tools/launchers/citron.sh" "$toolsPath/launchers/citron.sh"
 	chmod +x "$toolsPath/launchers/citron.sh"
-    mkdir -p "$HOME/.config/citron"
-    mkdir -p "$HOME/.local/share/citron"
+	mkdir -p "$HOME/.config/citron"
+	mkdir -p "$HOME/.local/share/citron"
 	rsync -avhp "$emudeckBackend/configs/citron/config/." "$HOME/.config/citron"
 	rsync -avhp "$emudeckBackend/configs/citron/data/." "$HOME/.local/share/citron"
-
-    configEmuAI "$Citron_emuName" "config" "$HOME/.config/citron" "$emudeckBackend/configs/citron/config" "true"
-    configEmuAI "$Citron_emuName" "data" "$HOME/.local/share/citron" "$emudeckBackend/configs/citron/data" "true"
-
-    Citron_setEmulationFolder
-    Citron_setupStorage
-    Citron_setupSaves
-    Citron_finalize
-    Citron_addParser
-    Citron_flushEmulatorLauncher
-  	createDesktopShortcut   "$HOME/.local/share/applications/citron.desktop" \
-							"Citron (AppImage)" \
-							"${toolsPath}/launchers/citron.sh"  \
-							"False"
-
+	configEmuAI "$Citron_emuName" "config" "$HOME/.config/citron" "$emudeckBackend/configs/citron/config" "true"
+	configEmuAI "$Citron_emuName" "data" "$HOME/.local/share/citron" "$emudeckBackend/configs/citron/data" "true"
+	Citron_setEmulationFolder
+	Citron_setupStorage
+	Citron_setupSaves
+	Citron_finalize
+	Citron_addParser
+	Citron_flushEmulatorLauncher
+	createDesktopShortcut "$HOME/.local/share/applications/citron.desktop" \
+						"Citron (AppImage)" \
+						"${toolsPath}/launchers/citron.sh" \
+						"False"
 	if [ -e "$ESDE_toolPath" ] || [ -f "${toolsPath}/$ESDE_downloadedToolName" ] || [ -f "${toolsPath}/$ESDE_oldtoolName.AppImage" ]; then
 		Citron_addESConfig
-	else
-		echo "ES-DE not found. Skipped adding custom system."
 	fi
+}
 
-    #Citron_setLanguage
-
+Citron_init_mac(){
+	setMSG "Initializing Citron settings (macOS)."
+	local cfgDir="${Citron_configPath_mac}"
+	mkdir -p "$cfgDir"
+	configEmuAI "$Citron_emuName" "config" "$cfgDir" "$emudeckBackend/configs/citron/config" "true"
+	local cfgFile="${Citron_configFile_mac}"
+	# Storage dirs
+	mkdir -p "${storagePath}/citron/dump"
+	mkdir -p "${storagePath}/citron/load"
+	mkdir -p "${storagePath}/citron/sdmc"
+	mkdir -p "${storagePath}/citron/nand"
+	mkdir -p "${storagePath}/citron/screenshots"
+	mkdir -p "${storagePath}/citron/tas"
+	# BIOS/keys symlink
+	mkdir -p "${biosPath}/citron"
+	mkdir -p "$cfgDir/keys/"
+	ln -sn "$cfgDir/keys/" "${biosPath}/citron/keys" 2>/dev/null || true
+	# Config paths
+	if [ -f "$cfgFile" ]; then
+		sed -i "s|Paths\\\\screenshot_path=.*|Paths\\\\screenshot_path=${storagePath}/citron/screenshots|" "$cfgFile"
+		sed -i "s|Paths\\\\gamedirs\\\\4\\\\path=.*|Paths\\\\gamedirs\\\\4\\\\path=${romsPath}/switch|" "$cfgFile"
+		sed -i "s|dump_directory=.*|dump_directory=${storagePath}/citron/dump|" "$cfgFile"
+		sed -i "s|load_directory=.*|load_directory=${storagePath}/citron/load|" "$cfgFile"
+		sed -i "s|nand_directory=.*|nand_directory=${storagePath}/citron/nand|" "$cfgFile"
+		sed -i "s|sdmc_directory=.*|sdmc_directory=${storagePath}/citron/sdmc|" "$cfgFile"
+		sed -i "s|tas_directory=.*|tas_directory=${storagePath}/citron/tas|" "$cfgFile"
+	fi
+	# Saves
+	mkdir -p "${savesPath}/citron/saves"
 }
 
 #update
 Citron_update() {
-    echo "Begin Citron update"
-
-    Citron_init
+	Citron_init
 }
 
 #ConfigurePaths
 Citron_setEmulationFolder() {
-    echo "Begin Citron Path Config"
-
-    screenshotDirOpt='Screenshots\\screenshot_path='
-    gameDirOpt='Paths\\gamedirs\\4\\path='
-    dumpDirOpt='dump_directory='
-    loadDir='load_directory='
-    nandDirOpt='nand_directory='
-    sdmcDirOpt='sdmc_directory='
-    tasDirOpt='tas_directory='
-    newScreenshotDirOpt='Screenshots\\screenshot_path='"${storagePath}/citron/screenshots"
-    newGameDirOpt='Paths\\gamedirs\\4\\path='"${romsPath}/switch"
-    newDumpDirOpt='dump_directory='"${storagePath}/citron/dump"
-    newLoadDir='load_directory='"${storagePath}/citron/load"
-    newNandDirOpt='nand_directory='"${storagePath}/citron/nand"
-    newSdmcDirOpt='sdmc_directory='"${storagePath}/citron/sdmc"
-    newTasDirOpt='tas_directory='"${storagePath}/citron/tas"
-
-    sed -i "/${screenshotDirOpt}/c\\${newScreenshotDirOpt}" "$Citron_configFile"
-    sed -i "/${gameDirOpt}/c\\${newGameDirOpt}" "$Citron_configFile"
-    sed -i "/${dumpDirOpt}/c\\${newDumpDirOpt}" "$Citron_configFile"
-    sed -i "/${loadDir}/c\\${newLoadDir}" "$Citron_configFile"
-    sed -i "/${nandDirOpt}/c\\${newNandDirOpt}" "$Citron_configFile"
-    sed -i "/${sdmcDirOpt}/c\\${newSdmcDirOpt}" "$Citron_configFile"
-    sed -i "/${tasDirOpt}/c\\${newTasDirOpt}" "$Citron_configFile"
-
-    #Setup Bios symlinks
-    unlink "${biosPath}/citron/keys" 2>/dev/null
-    unlink "${biosPath}/citron/firmware" 2>/dev/null
-
-    mkdir -p "$HOME/.local/share/citron/keys/"
-    mkdir -p "${biosPath}/citron"
-    ln -sn "$HOME/.local/share/citron/keys/" "${biosPath}/citron/keys"
-    ln -sn "$HOME/.local/share/citron/nand/system/Contents/registered/" "${biosPath}/citron/firmware"
-
+	echo "Begin Citron Path Config"
+	sed -i "/${screenshotDirOpt}/c\\${newScreenshotDirOpt}" "$Citron_configFile" 2>/dev/null || true
+	sed -i "s|Paths\\\\gamedirs\\\\4\\\\path=.*|Paths\\\\gamedirs\\\\4\\\\path=${romsPath}/switch|" "$Citron_configFile"
+	sed -i "s|dump_directory=.*|dump_directory=${storagePath}/citron/dump|" "$Citron_configFile"
+	sed -i "s|load_directory=.*|load_directory=${storagePath}/citron/load|" "$Citron_configFile"
+	sed -i "s|nand_directory=.*|nand_directory=${storagePath}/citron/nand|" "$Citron_configFile"
+	sed -i "s|sdmc_directory=.*|sdmc_directory=${storagePath}/citron/sdmc|" "$Citron_configFile"
+	sed -i "s|tas_directory=.*|tas_directory=${storagePath}/citron/tas|" "$Citron_configFile"
+	# BIOS symlinks
+	unlink "${biosPath}/citron/keys" 2>/dev/null || true
+	unlink "${biosPath}/citron/firmware" 2>/dev/null || true
+	mkdir -p "$HOME/.local/share/citron/keys/"
+	mkdir -p "${biosPath}/citron"
+	ln -sn "$HOME/.local/share/citron/keys/" "${biosPath}/citron/keys"
+	ln -sn "$HOME/.local/share/citron/nand/system/Contents/registered/" "${biosPath}/citron/firmware"
 }
 
 #SetLanguage
 Citron_setLanguage(){
-    setMSG "Setting Citron Language"
-    local language=$(locale | grep LANG | cut -d= -f2 | cut -d_ -f1)
-    languageOpt="language_index="
-    languageDefaultOpt="language_index\\\\default="
-    newLanguageDefaultOpt="language_index\\\\default=false" # we need those or else itll reset
-    regionOpt="region_index="
-    regionDefaultOpt="region_index\\\\default="
-    newRegionDefaultOpt="region_index\\\\default=false"
-	#TODO: call this somewhere, and input the $language from somewhere (args?)
-	if [[ -f "${Citron_configFile}" ]]; then
+	local cfgFile="$Citron_configFile"
+	[ "$(uname)" != "Linux" ] && cfgFile="$Citron_configFile_mac"
+	setMSG "Setting Citron Language"
+	local language=$(locale | grep LANG | cut -d= -f2 | cut -d_ -f1)
+	if [[ -f "$cfgFile" ]]; then
 		if [ ${Citron_languages[$language]+_} ]; then
-            newLanguageOpt='language_index='"${Citron_languages[$language]}"
-            newRegionOpt='region_index='"${Citron_regions[$language]}"
-            changeLine "$languageOpt" "$newLanguageOpt" "$Citron_configFile"
-            changeLine "$languageDefaultOpt" "$newLanguageDefaultOpt" "$Citron_configFile"
-            changeLine "$regionOpt" "$newRegionOpt" "$Citron_configFile"
-            changeLine "$regionDefaultOpt" "$newRegionDefaultOpt" "$Citron_configFile"
+			changeLine "language_index=" "language_index=${Citron_languages[$language]}" "$cfgFile"
+			changeLine "language_index\\\\default=" "language_index\\\\default=false" "$cfgFile"
+			changeLine "region_index=" "region_index=${Citron_regions[$language]}" "$cfgFile"
+			changeLine "region_index\\\\default=" "region_index\\\\default=false" "$cfgFile"
 		fi
 	fi
 }
 
 #SetupSaves
 Citron_setupSaves() {
-    echo "Begin Citron save link"
-    unlink "${savesPath}/citron/saves" 2>/dev/null # Fix for previous bad symlink2>/dev/null
-    linkToSaveFolder citron saves "${storagePath}/citron/nand/user/save/"
-    linkToSaveFolder citron profiles "${storagePath}/citron/nand/system/save/8000000000000010/su/avators/"
+	echo "Begin Citron save link"
+	unlink "${savesPath}/citron/saves" 2>/dev/null || true
+	linkToSaveFolder citron saves "${storagePath}/citron/nand/user/save/"
+	linkToSaveFolder citron profiles "${storagePath}/citron/nand/system/save/8000000000000010/su/avators/"
 }
 
 #SetupStorage
 Citron_setupStorage() {
-    echo "Begin Citron storage config"
-    mkdir -p "${storagePath}/citron/dump"
-    mkdir -p "${storagePath}/citron/load"
-    mkdir -p "${storagePath}/citron/sdmc"
-    mkdir -p "${storagePath}/citron/nand"
-    mkdir -p "${storagePath}/citron/screenshots"
-    mkdir -p "${storagePath}/citron/tas"
-    #Symlink to saves for CloudSync
-    ln -sn "${storagePath}/citron/nand/system/save/8000000000000010/su/avators/" "${savesPath}/citron/profiles"
+	echo "Begin Citron storage config"
+	mkdir -p "${storagePath}/citron/dump"
+	mkdir -p "${storagePath}/citron/load"
+	mkdir -p "${storagePath}/citron/sdmc"
+	mkdir -p "${storagePath}/citron/nand"
+	mkdir -p "${storagePath}/citron/screenshots"
+	mkdir -p "${storagePath}/citron/tas"
 }
 
 #WipeSettings
 Citron_wipe() {
-    echo "Begin Citron delete config directories"
-    rm -rf "$HOME/.config/citron"
-    rm -rf "$HOME/.local/share/citron"
+	echo "Begin Citron delete config directories"
+	if [ "$(uname)" != "Linux" ]; then
+		rm -rf "${Citron_configPath_mac}"
+		return
+	fi
+	rm -rf "$HOME/.config/citron"
+	rm -rf "$HOME/.local/share/citron"
 }
 
 #Uninstall
 Citron_uninstall() {
-    echo "Begin Citron uninstall"
-    removeParser "nintendo_switch_citron.json"
-    rm -rf "$Citron_emuPath"
+	if [ "$(uname)" != "Linux" ]; then
+		mac_uninstall_app "Citron.app"
+		removeParser "nintendo_switch_citron.json"
+		return
+	fi
+	echo "Begin Citron uninstall"
+	removeParser "nintendo_switch_citron.json"
+	rm -rf "$Citron_emuPath"
 }
 
 #setABXYstyle
 Citron_setABXYstyle() {
-    echo "NYI"
+	echo "NYI"
 }
 
 #WideScreenOn
 Citron_wideScreenOn() {
-    echo "NYI"
+	echo "NYI"
 }
 
 #WideScreenOff
 Citron_wideScreenOff() {
-    echo "NYI"
+	echo "NYI"
 }
 
 #BezelOn
 Citron_bezelOn() {
-    echo "NYI"
+	echo "NYI"
 }
 
 #BezelOff
 Citron_bezelOff() {
-    echo "NYI"
+	echo "NYI"
 }
 
 #finalExec - Extra stuff
 Citron_finalize() {
-    echo "Begin Citron finalize"
-    Citron_cleanup
+	echo "Begin Citron finalize"
+	Citron_cleanup
 }
 
 Citron_IsInstalled() {
-    if [ -e "$Citron_emuPath" ]; then
-        echo "true"
-    else
-        echo "false"
-    fi
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "Citron.app"; return; fi
+	if [ -e "$Citron_emuPath" ]; then
+		echo "true"
+	else
+		echo "false"
+	fi
 }
-
 
 Citron_resetConfig() {
-    Citron_init &>/dev/null && echo "true" || echo "false"
+	Citron_init &>/dev/null && echo "true" || echo "false"
 }
 
-
-
 Citron_setResolution(){
-
+	local cfgFile="$Citron_configFile"
+	[ "$(uname)" != "Linux" ] && cfgFile="$Citron_configFile_mac"
 	case $citronResolution in
 		"720P") multiplier=2; docked="false";;
 		"1080P") multiplier=2; docked="true";;
@@ -267,24 +267,19 @@ Citron_setResolution(){
 		"4K") multiplier=3; docked="true";;
 		*) echo "Error"; return 1;;
 	esac
-
-	RetroArch_setConfigOverride "resolution_setup" $multiplier "$Citron_configFile"
-	RetroArch_setConfigOverride "use_docked_mode" $docked "$Citron_configFile"
+	RetroArch_setConfigOverride "resolution_setup" $multiplier "$cfgFile"
+	RetroArch_setConfigOverride "use_docked_mode" $docked "$cfgFile"
 }
 
 Citron_flushEmulatorLauncher(){
-
-
 	flushEmulatorLaunchers "citron"
-
 }
 
 Citron_addESConfig(){
-
-    ESDE_junksettingsFile
-    ESDE_addCustomSystemsFile
-    ESDE_setEmulationFolder
-
+	[ "$(uname)" != "Linux" ] && return
+	ESDE_junksettingsFile
+	ESDE_addCustomSystemsFile
+	ESDE_setEmulationFolder
 	if [[ $(grep -rnw "$es_systemsFile" -e 'switch') == "" ]]; then
 		xmlstarlet ed -S --inplace --subnode '/systemList' --type elem --name 'system' \
 		--var newSystem '$prev' \
@@ -292,24 +287,17 @@ Citron_addESConfig(){
 		--subnode '$newSystem' --type elem --name 'fullname' -v 'Nintendo Switch' \
 		--subnode '$newSystem' --type elem --name 'path' -v '%ROMPATH%/switch' \
 		--subnode '$newSystem' --type elem --name 'extension' -v '.nca .NCA .nro .NRO .nso .NSO .nsp .NSP .xci .XCI' \
-		--subnode '$newSystem' --type elem --name 'commandB' -v "%EMULATOR_RYUJINX% %ROM%" \
-		--insert '$newSystem/commandB' --type attr --name 'label' --value "Ryujinx (Standalone)" \
 		--subnode '$newSystem' --type elem --name 'commandV' -v "%INJECT%=%BASENAME%.esprefix %EMULATOR_CITRON% -f -g %ROM%" \
 		--insert '$newSystem/commandV' --type attr --name 'label' --value "Citron (Standalone)" \
 		--subnode '$newSystem' --type elem --name 'platform' -v 'switch' \
 		--subnode '$newSystem' --type elem --name 'theme' -v 'switch' \
-		-r 'systemList/system/commandB' -v 'command' \
 		-r 'systemList/system/commandV' -v 'command' \
 		"$es_systemsFile"
-
 		xmlstarlet fo "$es_systemsFile" > "$es_systemsFile".tmp && mv "$es_systemsFile".tmp "$es_systemsFile"
 	fi
-	#Custom Systems config end
-
 	ESDE_refreshCustomEmus
 }
 
-
 Citron_addParser(){
-  addParser "nintendo_switch_citron.json"
+	addParser "nintendo_switch_citron.json"
 }
