@@ -56,26 +56,8 @@ Eden_install() {
 }
 
 Eden_install_mac(){
-	setMSG "Installing Eden (macOS)"
-	local arch
-	arch=$(mac_arch)
-	local url
-	if [ "$arch" = "arm64" ]; then
-		url=$(mac_get_gh_release_url "pflyly/eden-mirror" "eden-.*macos-arm64.*\.(dmg|zip)" "eden-.*macos.*\.(dmg|zip)")
-	else
-		url=$(mac_get_gh_release_url "pflyly/eden-mirror" "eden-.*macos-x64.*\.(dmg|zip)" "eden-.*macos.*\.(dmg|zip)")
-	fi
-	if [ -z "$url" ]; then
-		echo "[mac] ERROR: Could not find Eden macOS release."
-		return 1
-	fi
-	# Detect if DMG or ZIP
-	if [[ "$url" == *.dmg ]]; then
-		mac_install_dmg "Eden" "$url" "eden.app" || return 1
-	else
-		mac_install_zip "Eden" "$url" "eden.app" || return 1
-	fi
-	mac_deploy_launcher "eden" "/Applications/eden.app"
+	# Eden mirror repo is unavailable (access blocked / DMCA). No macOS builds exist.
+	mac_emu_skip "Eden" "Mirror repo not found — no active macOS builds available"
 }
 
 #ApplyInitialSettings

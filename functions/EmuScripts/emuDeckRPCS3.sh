@@ -151,19 +151,14 @@ RPCS3_install(){
 
 RPCS3_install_mac(){
 	setMSG "Installing RPCS3 (macOS)"
-	local arch
-	arch=$(mac_arch)
+	# RPCS3 macOS releases ship as .7z (not .dmg) — requires p7zip
 	local url
-	if [ "$arch" = "arm64" ]; then
-		url=$(mac_get_gh_release_url "RPCS3/rpcs3-binaries-mac" "rpcs3-.*arm64.*\.dmg" "rpcs3-.*\.dmg")
-	else
-		url=$(mac_get_gh_release_url "RPCS3/rpcs3-binaries-mac" "rpcs3-.*x64.*\.dmg" "rpcs3-.*\.dmg")
-	fi
+	url=$(mac_get_gh_release_url "RPCS3/rpcs3-binaries-mac" "rpcs3-.*_macos\.7z" "rpcs3-.*_macos.*\.7z")
 	if [ -z "$url" ]; then
 		echo "[mac] ERROR: Could not find RPCS3 macOS release. Check https://github.com/RPCS3/rpcs3-binaries-mac"
 		return 1
 	fi
-	mac_install_dmg "RPCS3" "$url" "RPCS3.app" || return 1
+	mac_install_7z "RPCS3" "$url" "RPCS3.app" || return 1
 	mac_deploy_launcher "rpcs3" "/Applications/RPCS3.app"
 }
 

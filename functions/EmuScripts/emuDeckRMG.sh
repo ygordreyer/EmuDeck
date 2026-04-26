@@ -29,15 +29,8 @@ Rmg_install(){
 }
 
 RMG_install_mac(){
-	setMSG "Installing $RMG_emuName (macOS)"
-	local url
-	url=$(mac_get_gh_release_url "Rosalie241/RMG" "RMG-.*macOS.*\.dmg" "RMG.*\.dmg")
-	if [ -z "$url" ]; then
-		echo "[mac] ERROR: Could not find RMG macOS release."
-		return 1
-	fi
-	mac_install_dmg "RMG" "$url" "RMG.app" || return 1
-	mac_deploy_launcher "rosaliesmupengui" "/Applications/RMG.app"
+	# RMG (Rosalie's Mupen GUI) has no macOS builds — Linux and Windows only.
+	mac_emu_skip "RMG" "No macOS builds available — Linux and Windows only"
 }
 
 #ApplyInitialSettings

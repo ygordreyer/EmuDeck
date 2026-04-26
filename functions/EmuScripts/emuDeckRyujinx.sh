@@ -63,21 +63,9 @@ Ryujinx_install(){
 }
 
 Ryujinx_install_mac(){
-	setMSG "Installing Ryujinx (macOS)"
-	local arch
-	arch=$(mac_arch)
-	local url
-	if [ "$arch" = "arm64" ]; then
-		url=$(mac_get_gh_release_url "Ryujinx/release-channel-master" "ryujinx-.*-macos_arm64\.tar\.gz" "ryujinx-.*-macos.*\.tar\.gz")
-	else
-		url=$(mac_get_gh_release_url "Ryujinx/release-channel-master" "ryujinx-.*-macos_x64\.tar\.gz" "ryujinx-.*-macos.*\.tar\.gz")
-	fi
-	if [ -z "$url" ]; then
-		echo "[mac] ERROR: Could not find Ryujinx macOS release."
-		return 1
-	fi
-	mac_install_targz "Ryujinx" "$url" "Ryujinx.app" || return 1
-	mac_deploy_launcher "ryujinx" "/Applications/Ryujinx.app"
+	# Ryujinx was discontinued following a Nintendo DMCA takedown (Oct 2024).
+	# No macOS builds are available.
+	mac_emu_skip "Ryujinx" "Project discontinued — Nintendo DMCA takedown (Oct 2024)"
 }
 
 #ApplyInitialSettings

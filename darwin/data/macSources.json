@@ -1,5 +1,5 @@
 {
-  "_comment": "EmuDeck macOS emulator source definitions. installMethod: cask | dmg | zip | targz. macSkip: true = not supported on macOS.",
+  "_comment": "EmuDeck macOS emulator source definitions. installMethod: cask | dmg | zip | targz | 7z. macSkip: true = not supported on macOS.",
 
   "Dolphin": {
     "cask": "dolphin",
@@ -111,12 +111,10 @@
 
   "RPCS3": {
     "cask": null,
-    "installMethod": "dmg",
+    "installMethod": "7z",
     "githubRepo": "RPCS3/rpcs3-binaries-mac",
     "assetPattern": {
-      "arm64": "rpcs3-.*arm64.*\\.dmg",
-      "x86_64": "rpcs3-.*x64.*\\.dmg",
-      "any": "rpcs3-.*\\.dmg"
+      "any": "rpcs3-.*_macos\\.7z"
     },
     "appName": "RPCS3.app",
     "configPath": "Library/Application Support/rpcs3",
@@ -129,7 +127,9 @@
     "installMethod": "dmg",
     "githubRepo": "Vita3K/Vita3K",
     "assetPattern": {
-      "any": "Vita3K-macOS\\.dmg"
+      "arm64": "macos-arm64-latest\\.dmg",
+      "x86_64": "^macos-latest\\.dmg$",
+      "any": "macos-arm64-latest\\.dmg"
     },
     "appName": "Vita3K.app",
     "configPath": "Library/Application Support/Vita3K",
@@ -139,105 +139,66 @@
 
   "Cemu": {
     "cask": null,
-    "installMethod": "zip",
+    "installMethod": "dmg",
     "githubRepo": "cemu-project/Cemu",
     "assetPattern": {
-      "arm64": "cemu-.*macos-arm64\\.zip",
-      "x86_64": "cemu-.*macos-x64\\.zip",
-      "any": "cemu-.*macos.*\\.zip"
+      "any": "cemu-.*-macos.*\\.dmg"
     },
     "appName": "Cemu.app",
     "configPath": "Library/Application Support/Cemu",
     "savePath": "Library/Application Support/Cemu",
-    "macSkip": false
+    "macSkip": false,
+    "_note": "Only x64 macOS build is available — arm64 runs via Rosetta 2"
   },
 
   "ShadPS4": {
     "cask": null,
-    "installMethod": "dmg",
+    "installMethod": "zip",
     "githubRepo": "shadps4-emu/shadPS4",
     "assetPattern": {
-      "arm64": "shadps4-macos-arm64\\.dmg",
-      "x86_64": "shadps4-macos-x64\\.dmg",
-      "any": "shadps4-macos.*\\.dmg"
+      "any": "shadps4-macos-sdl.*\\.zip"
     },
     "appName": "shadPS4.app",
     "configPath": "Library/Application Support/shadPS4",
     "savePath": "Library/Application Support/shadPS4",
-    "macSkip": false
+    "macSkip": false,
+    "_note": "No separate arm64/x64 macOS build — single universal binary"
   },
 
   "Ryujinx": {
-    "cask": null,
-    "installMethod": "targz",
-    "githubRepo": "Ryujinx/release-channel-master",
-    "assetPattern": {
-      "arm64": "ryujinx-.*-macos_arm64\\.tar\\.gz",
-      "x86_64": "ryujinx-.*-macos_x64\\.tar\\.gz",
-      "any": "ryujinx-.*-macos.*\\.tar\\.gz"
-    },
-    "appName": "Ryujinx.app",
-    "configPath": "Library/Application Support/Ryujinx",
-    "savePath": "Library/Application Support/Ryujinx",
-    "macSkip": false
+    "macSkip": true,
+    "macSkipReason": "Project discontinued — Nintendo DMCA takedown (Oct 2024)"
   },
 
   "Azahar": {
     "cask": null,
-    "installMethod": "dmg",
+    "installMethod": "zip",
     "githubRepo": "azahar-emu/azahar",
     "assetPattern": {
-      "arm64": "azahar-.*macos-arm64.*\\.dmg",
-      "x86_64": "azahar-.*macos-x86_64.*\\.dmg",
-      "any": "azahar-.*macos.*\\.dmg"
+      "arm64": "azahar-macos-arm64-.*\\.zip",
+      "x86_64": "azahar-macos-x86_64-.*\\.zip",
+      "any": "azahar-macos-arm64-.*\\.zip"
     },
     "appName": "Azahar.app",
     "configPath": "Library/Application Support/azahar",
     "savePath": "Library/Application Support/azahar",
-    "macSkip": false
+    "macSkip": false,
+    "_note": "Use azahar-macos-* not azahar-libretro-macos-* (that's the RetroArch core)"
   },
 
   "Citron": {
-    "cask": null,
-    "installMethod": "dmg",
-    "githubRepo": "citron-emu/citron",
-    "assetPattern": {
-      "arm64": "citron-.*macos-arm64.*\\.dmg",
-      "x86_64": "citron-.*macos-x86_64.*\\.dmg",
-      "any": "citron-.*macos.*\\.dmg"
-    },
-    "appName": "Citron.app",
-    "configPath": "Library/Application Support/citron",
-    "savePath": "Library/Application Support/citron",
-    "macSkip": false
+    "macSkip": true,
+    "macSkipReason": "Project discontinued — GitHub repo no longer available"
   },
 
   "Eden": {
-    "cask": null,
-    "installMethod": "dmg",
-    "githubRepo": "pflyly/eden-mirror",
-    "assetPattern": {
-      "arm64": "eden-.*macos-arm64.*\\.(dmg|zip)",
-      "x86_64": "eden-.*macos-x64.*\\.(dmg|zip)",
-      "any": "eden-.*macos.*\\.(dmg|zip)"
-    },
-    "appName": "eden.app",
-    "configPath": "Library/Application Support/eden",
-    "savePath": "Library/Application Support/eden",
-    "macSkip": false
+    "macSkip": true,
+    "macSkipReason": "Mirror repo not found — no active macOS builds available"
   },
 
   "RMG": {
-    "cask": null,
-    "installMethod": "dmg",
-    "githubRepo": "Rosalie241/RMG",
-    "assetPattern": {
-      "any": "RMG-.*macOS.*\\.dmg"
-    },
-    "appName": "RMG.app",
-    "configPath": "Library/Application Support/RMG",
-    "savePath": "Library/Application Support/RMG",
-    "macSkip": false
+    "macSkip": true,
+    "macSkipReason": "No macOS builds available — Linux and Windows only"
   },
 
   "BigPEmu": {

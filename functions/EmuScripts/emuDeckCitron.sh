@@ -56,21 +56,8 @@ Citron_install() {
 }
 
 Citron_install_mac(){
-	setMSG "Installing Citron (macOS)"
-	local arch
-	arch=$(mac_arch)
-	local url
-	if [ "$arch" = "arm64" ]; then
-		url=$(mac_get_gh_release_url "citron-emu/citron" "citron-.*macos-arm64.*\.dmg" "citron-.*macos.*\.dmg")
-	else
-		url=$(mac_get_gh_release_url "citron-emu/citron" "citron-.*macos-x86_64.*\.dmg" "citron-.*macos.*\.dmg")
-	fi
-	if [ -z "$url" ]; then
-		echo "[mac] ERROR: Could not find Citron macOS release."
-		return 1
-	fi
-	mac_install_dmg "Citron" "$url" "Citron.app" || return 1
-	mac_deploy_launcher "citron" "/Applications/Citron.app"
+	# Citron GitHub repo is no longer available — project discontinued.
+	mac_emu_skip "Citron" "Project discontinued — GitHub repo no longer available"
 }
 
 #ApplyInitialSettings

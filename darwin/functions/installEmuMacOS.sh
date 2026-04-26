@@ -284,6 +284,89 @@ mac_install_targz() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# mac_install_7z <emuName> <url> <AppName.app>
+#
+# Downloads a .7z archive, extracts with 7z (p7zip), finds the .app, copies
+# to /Applications. Requires: brew install p7zip
+# Used for RPCS3 (rpcs3-*_macos.7z) and any other 7z-distributed emulators.
+# ─────────────────────────────────────────────────────────────────────────────
+mac_install_7z() {
+    local name="$1"
+    local url="$2"
+    local appName="$3"
+
+    if [ -z "$url" ]; then
+        echo "[mac] ERROR: No download URL provided for ${name}."
+        return 1
+    fi
+
+    # Ensure 7z is available
+    if ! command -v 7z >/dev/null 2>&1 && ! command -v 7za >/dev/null 2>&1; then
+        echo "[mac] 7z not found — installing p7zip via Homebrew..."
+        if ! brew install p7zip 2>&1; then
+            echo "[mac] ERROR: Failed to install p7zip. Cannot extract .7z archive for ${name}."
+            return 1
+        fi
+    fi
+    local _7z_cmd="7z"
+    command -v 7z >/dev/null 2>&1 || _7z_cmd="7za"
+
+    setMSG "Installing ${name} (macOS)"
+    echo "[mac] Installing ${name} via .7z: ${url}"
+
+    local tmpDir
+    tmpDir="$(_mac_emu_tmpdir)/${name}"
+    mkdir -p "$tmpDir"
+
+    local archiveFile="${tmpDir}/${name}.7z"
+    local extractDir="${tmpDir}/extracted"
+    mkdir -p "$extractDir"
+
+    # Download
+    echo "[mac] Downloading .7z archive..."
+    if ! curl -L --progress-bar -o "$archiveFile" "$url"; then
+        echo "[mac] ERROR: Download failed for ${name}."
+        return 1
+    fi
+
+    # Extract
+    echo "[mac] Extracting .7z archive..."
+    if ! ${_7z_cmd} x "$archiveFile" -o"$extractDir" -y 2>&1; then
+        echo "[mac] ERROR: 7z extraction failed for ${name}."
+        return 1
+    fi
+
+    # Find .app in extracted content
+    local foundApp
+    foundApp=$(find "$extractDir" -maxdepth 5 -name "${appName}" -type d | head -1)
+
+    if [ -z "$foundApp" ]; then
+        foundApp=$(find "$extractDir" -maxdepth 5 -name "*.app" -type d | head -1)
+        echo "[mac] Warning: ${appName} not found; using ${foundApp}"
+    fi
+
+    if [ -z "$foundApp" ]; then
+        echo "[mac] ERROR: No .app found in .7z archive for ${name}."
+        return 1
+    fi
+
+    # Copy to /Applications
+    echo "[mac] Installing ${foundApp} → /Applications/"
+    rm -rf "/Applications/${appName}" 2>/dev/null || true
+    if ! cp -R "$foundApp" "/Applications/"; then
+        echo "[mac] ERROR: cp to /Applications failed. Trying ~/Applications..."
+        mkdir -p "${HOME}/Applications"
+        cp -R "$foundApp" "${HOME}/Applications/" || return 1
+    fi
+
+    mac_unquarantine "/Applications/${appName}"
+    mac_unquarantine "${HOME}/Applications/${appName}"
+
+    echo "[mac] ${name} installed successfully."
+    return 0
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # mac_uninstall_cask <emuName> <caskId>
 # Uninstalls a cask-installed app. Falls back to mac_uninstall_app on failure.
 # ─────────────────────────────────────────────────────────────────────────────
