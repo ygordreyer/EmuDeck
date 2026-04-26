@@ -16,6 +16,7 @@ Xenia_cleanup(){
 
 #Install
 Xenia_install(){
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Xenia" "Windows-only emulator — not available on macOS"; return 0; fi
 	local version
 	version=$1
 	local showProgress="$2"

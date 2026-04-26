@@ -39,11 +39,16 @@ RetroArch_backupConfigs(){
 
 #Install
 RetroArch_install(){
+	if [ "$(uname)" != "Linux" ]; then RetroArch_install_mac "$@"; return $?; fi
 	setMSG "Installing $RetroArch_emuName"
 	installEmuFP "${RetroArch_emuName}" "${RetroArch_emuPath}" "emulator" ""
 	RetroArch_installCores
 }
 
+RetroArch_install_mac(){
+	mac_install_cask "RetroArch" "retroarch" "RetroArch.app" || return 1
+	mac_deploy_launcher "retroarch" "/Applications/RetroArch.app"
+}
 
 #Fix for autoupdate
 Retroarch_install(){
@@ -51,7 +56,34 @@ Retroarch_install(){
 }
 
 #ApplyInitialSettings
+RetroArch_init_mac(){
+	setMSG "Initializing RetroArch (macOS)"
+	local cfgDir="${HOME}/Library/Application Support/RetroArch"
+	mkdir -p "${cfgDir}/config"
+	mkdir -p "${cfgDir}/cores"
+	mkdir -p "${cfgDir}/saves"
+	mkdir -p "${cfgDir}/states"
+	mkdir -p "${cfgDir}/screenshots"
+	configEmuAI "$RetroArch_emuName" "config" "$cfgDir" "$emudeckBackend/configs/org.libretro.RetroArch/config/retroarch" "true"
+	local cfgFile="${cfgDir}/retroarch.cfg"
+	if [ -f "$cfgFile" ]; then
+		# Override key paths to macOS locations
+		changeLine "savefile_directory = " "savefile_directory = \"${savesPath}/retroarch/saves\"" "$cfgFile"
+		changeLine "savestate_directory = " "savestate_directory = \"${savesPath}/retroarch/states\"" "$cfgFile"
+		changeLine "screenshot_directory = " "screenshot_directory = \"${storagePath}/retroarch/screenshots\"" "$cfgFile"
+		changeLine "system_directory = " "system_directory = \"${biosPath}\"" "$cfgFile"
+		changeLine "rgui_browser_directory = " "rgui_browser_directory = \"${romsPath}\"" "$cfgFile"
+	fi
+	# Setup saves
+	mkdir -p "${savesPath}/retroarch/saves"
+	mkdir -p "${savesPath}/retroarch/states"
+	mkdir -p "${storagePath}/retroarch/screenshots"
+	mkdir -p "${storagePath}/retroarch/overlays"
+	mkdir -p "${storagePath}/retroarch/shaders"
+}
+
 RetroArch_init(){
+	if [ "$(uname)" != "Linux" ]; then RetroArch_init_mac; return $?; fi
 
 	#netPlay
 	setSetting netplayCMD "' '"

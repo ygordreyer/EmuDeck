@@ -1,0 +1,233 @@
+{
+  "_comment": "EmuDeck macOS emulator source definitions. installMethod: cask | dmg | zip | targz | 7z. macSkip: true = not supported on macOS.",
+
+  "Dolphin": {
+    "cask": "dolphin",
+    "installMethod": "cask",
+    "appName": "Dolphin.app",
+    "configPath": "Library/Application Support/Dolphin",
+    "savePath": "Library/Application Support/Dolphin",
+    "macSkip": false
+  },
+
+  "DuckStation": {
+    "cask": "duckstation",
+    "installMethod": "cask",
+    "appName": "DuckStation.app",
+    "configPath": "Library/Application Support/DuckStation",
+    "savePath": "Library/Application Support/DuckStation",
+    "macSkip": false
+  },
+
+  "PPSSPP": {
+    "cask": "ppsspp",
+    "installMethod": "cask",
+    "appName": "PPSSPP.app",
+    "configPath": "Library/Application Support/PPSSPP",
+    "savePath": "Library/Application Support/PPSSPP",
+    "macSkip": false
+  },
+
+  "RetroArch": {
+    "cask": "retroarch",
+    "installMethod": "cask",
+    "appName": "RetroArch.app",
+    "configPath": "Library/Application Support/RetroArch",
+    "savePath": "Library/Application Support/RetroArch/saves",
+    "macSkip": false
+  },
+
+  "mGBA": {
+    "cask": "mgba",
+    "installMethod": "cask",
+    "appName": "mGBA.app",
+    "configPath": "Library/Application Support/mGBA",
+    "savePath": "Library/Application Support/mGBA",
+    "macSkip": false
+  },
+
+  "ScummVM": {
+    "cask": "scummvm",
+    "installMethod": "cask",
+    "appName": "ScummVM.app",
+    "configPath": "Library/Application Support/ScummVM",
+    "savePath": "Library/Application Support/ScummVM",
+    "macSkip": false
+  },
+
+  "MAME": {
+    "cask": "mame",
+    "installMethod": "cask",
+    "appName": "mame",
+    "configPath": ".mame",
+    "savePath": ".mame/nvram",
+    "macSkip": false
+  },
+
+  "melonDS": {
+    "cask": "melonds",
+    "installMethod": "cask",
+    "appName": "melonDS.app",
+    "configPath": "Library/Application Support/melonDS",
+    "savePath": "Library/Application Support/melonDS",
+    "macSkip": false
+  },
+
+  "ares": {
+    "cask": "ares",
+    "installMethod": "cask",
+    "appName": "ares.app",
+    "configPath": "Library/Application Support/dev.ares.ares",
+    "savePath": "Library/Application Support/dev.ares.ares",
+    "macSkip": false
+  },
+
+  "Flycast": {
+    "cask": "flycast",
+    "installMethod": "cask",
+    "appName": "Flycast.app",
+    "configPath": "Library/Application Support/flycast",
+    "savePath": "Library/Application Support/flycast",
+    "macSkip": false
+  },
+
+  "PCSX2QT": {
+    "cask": "pcsx2",
+    "installMethod": "cask",
+    "appName": "PCSX2.app",
+    "configPath": "Library/Application Support/PCSX2/inis",
+    "savePath": "Library/Application Support/PCSX2/memcards",
+    "macSkip": false
+  },
+
+  "Xemu": {
+    "cask": "xemu",
+    "installMethod": "cask",
+    "appName": "xemu.app",
+    "configPath": "Library/Application Support/xemu",
+    "savePath": "Library/Application Support/xemu",
+    "macSkip": false
+  },
+
+  "RPCS3": {
+    "cask": null,
+    "installMethod": "7z",
+    "githubRepo": "RPCS3/rpcs3-binaries-mac",
+    "assetPattern": {
+      "any": "rpcs3-.*_macos\\.7z"
+    },
+    "appName": "RPCS3.app",
+    "configPath": "Library/Application Support/rpcs3",
+    "savePath": "Library/Application Support/rpcs3",
+    "macSkip": false
+  },
+
+  "Vita3K": {
+    "cask": null,
+    "installMethod": "dmg",
+    "githubRepo": "Vita3K/Vita3K",
+    "assetPattern": {
+      "arm64": "macos-arm64-latest\\.dmg",
+      "x86_64": "^macos-latest\\.dmg$",
+      "any": "macos-arm64-latest\\.dmg"
+    },
+    "appName": "Vita3K.app",
+    "configPath": "Library/Application Support/Vita3K",
+    "savePath": "Library/Application Support/Vita3K",
+    "macSkip": false
+  },
+
+  "Cemu": {
+    "cask": null,
+    "installMethod": "dmg",
+    "githubRepo": "cemu-project/Cemu",
+    "assetPattern": {
+      "any": "cemu-.*-macos.*\\.dmg"
+    },
+    "appName": "Cemu.app",
+    "configPath": "Library/Application Support/Cemu",
+    "savePath": "Library/Application Support/Cemu",
+    "macSkip": false,
+    "_note": "Only x64 macOS build is available — arm64 runs via Rosetta 2"
+  },
+
+  "ShadPS4": {
+    "cask": null,
+    "installMethod": "zip",
+    "githubRepo": "shadps4-emu/shadPS4",
+    "assetPattern": {
+      "any": "shadps4-macos-sdl.*\\.zip"
+    },
+    "appName": "shadPS4.app",
+    "configPath": "Library/Application Support/shadPS4",
+    "savePath": "Library/Application Support/shadPS4",
+    "macSkip": false,
+    "_note": "No separate arm64/x64 macOS build — single universal binary"
+  },
+
+  "Ryujinx": {
+    "macSkip": true,
+    "macSkipReason": "Project discontinued — Nintendo DMCA takedown (Oct 2024)"
+  },
+
+  "Azahar": {
+    "cask": null,
+    "installMethod": "zip",
+    "githubRepo": "azahar-emu/azahar",
+    "assetPattern": {
+      "arm64": "azahar-macos-arm64-.*\\.zip",
+      "x86_64": "azahar-macos-x86_64-.*\\.zip",
+      "any": "azahar-macos-arm64-.*\\.zip"
+    },
+    "appName": "Azahar.app",
+    "configPath": "Library/Application Support/azahar",
+    "savePath": "Library/Application Support/azahar",
+    "macSkip": false,
+    "_note": "Use azahar-macos-* not azahar-libretro-macos-* (that's the RetroArch core)"
+  },
+
+  "Citron": {
+    "macSkip": true,
+    "macSkipReason": "Project discontinued — GitHub repo no longer available"
+  },
+
+  "Eden": {
+    "macSkip": true,
+    "macSkipReason": "Mirror repo not found — no active macOS builds available"
+  },
+
+  "RMG": {
+    "macSkip": true,
+    "macSkipReason": "No macOS builds available — Linux and Windows only"
+  },
+
+  "BigPEmu": {
+    "macSkip": true,
+    "macSkipReason": "Windows-only — no macOS build available"
+  },
+
+  "Xenia": {
+    "macSkip": true,
+    "macSkipReason": "Windows-only — no macOS build available"
+  },
+
+  "Model2": {
+    "macSkip": true,
+    "macSkipReason": "Windows-only — no macOS build available"
+  },
+
+  "Suyu": {
+    "macSkip": true,
+    "macSkipReason": "Project archived — no macOS build available"
+  },
+
+  "CemuProton": {
+    "macSkip": true,
+    "macSkipReason": "Linux Proton-only — not applicable on macOS"
+  },
+
+  "Primehack": {
+    "macSkip": true,
+    "macSkipReason": "No official macOS build available"
+  }
+}

@@ -423,13 +423,63 @@ Cemu_uninstall () {
 
 # Install
 Cemu_install () {
+	if [ "$(uname)" != "Linux" ]; then Cemu_install_mac "$@"; return $?; fi
 	local showProgress="$1"
 	Cemu_functions "install" "$showProgress"
 }
 
+Cemu_install_mac(){
+	setMSG "Installing Cemu (macOS)"
+	local arch
+	arch=$(uname -m)
+	local url
+	if [ "$arch" = "arm64" ]; then
+		url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos-arm64\.zip" "cemu-.*macos.*\.zip")
+	else
+		url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos-x64\.zip" "cemu-.*macos.*\.zip")
+	fi
+	if [ -z "$url" ]; then
+		echo "[mac] ERROR: Could not find Cemu macOS release."
+		return 1
+	fi
+	mac_install_zip "Cemu" "$url" "Cemu.app" || return 1
+	mac_deploy_launcher "cemu" "/Applications/Cemu.app"
+}
+
+# Apply initial settings (macOS)
+CemuNative_install(){
+	Cemu_install "$@"
+}
+
+Cemu_init_mac(){
+	setMSG "Initializing Cemu settings (macOS)."
+	local cfgDir="${HOME}/Library/Application Support/Cemu"
+	mkdir -p "$cfgDir"
+	mkdir -p "${storagePath}/cemu"
+	mkdir -p "${savesPath}/cemu/saves"
+	mkdir -p "${romsPath}/wiiu"
+	# BIOS/keys symlink
+	mkdir -p "${biosPath}/cemu"
+	# Basic mlc01 setup
+	if [ ! -d "${storagePath}/cemu/mlc01" ]; then
+		mkdir -p "${storagePath}/cemu/mlc01"
+	fi
+	# Set ROM path in settings.xml if it exists
+	local cfgFile="${cfgDir}/settings.xml"
+	if [ -f "$cfgFile" ]; then
+		sed -i "s|<GamePaths>.*</GamePaths>|<GamePaths><Entry>${romsPath}/wiiu</Entry></GamePaths>|" "$cfgFile" 2>/dev/null || true
+		sed -i "s|<mlc_path>.*</mlc_path>|<mlc_path>${storagePath}/cemu/mlc01</mlc_path>|" "$cfgFile" 2>/dev/null || true
+	fi
+}
+
 # Apply initial settings
 Cemu_init () {
+	if [ "$(uname)" != "Linux" ]; then Cemu_init_mac; return $?; fi
 	Cemu_functions "init"
+}
+
+CemuNative_init(){
+	Cemu_init "$@"
 }
 
 # Update
