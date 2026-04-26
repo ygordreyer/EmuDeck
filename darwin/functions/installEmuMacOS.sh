@@ -98,10 +98,13 @@ mac_install_dmg() {
         return 1
     fi
 
-    # Mount
+    # Strip quarantine from the archive BEFORE extraction (avoids inheriting xattr)
+    xattr -cr "$dmgFile" 2>/dev/null || true
+
+    # Mount (-noverify skips checksum to avoid hangs on slow connections)
     echo "[mac] Mounting DMG..."
     mkdir -p "$mountPoint"
-    if ! hdiutil attach "$dmgFile" -mountpoint "$mountPoint" -nobrowse -quiet; then
+    if ! hdiutil attach "$dmgFile" -mountpoint "$mountPoint" -nobrowse -noverify -noautoopen -quiet; then
         echo "[mac] ERROR: hdiutil attach failed for ${name}."
         return 1
     fi
@@ -122,19 +125,19 @@ mac_install_dmg() {
         return 1
     fi
 
-    # Copy to /Applications (overwrite)
-    echo "[mac] Installing ${foundApp} → /Applications/"
+    # Copy to /Applications using ditto (preserves resource forks, avoids quarantine inherit)
+    echo "[mac] Installing ${foundApp} → /Applications/${appName}"
     rm -rf "/Applications/${appName}" 2>/dev/null || true
-    if ! cp -R "$foundApp" "/Applications/"; then
-        echo "[mac] ERROR: cp to /Applications failed. Trying ~/Applications..."
+    if ! ditto "$foundApp" "/Applications/${appName}"; then
+        echo "[mac] ERROR: ditto to /Applications failed. Trying ~/Applications..."
         mkdir -p "${HOME}/Applications"
-        cp -R "$foundApp" "${HOME}/Applications/" || { hdiutil detach "$mountPoint" -quiet; return 1; }
+        ditto "$foundApp" "${HOME}/Applications/${appName}" || { hdiutil detach "$mountPoint" -quiet; return 1; }
     fi
 
     # Unmount
     hdiutil detach "$mountPoint" -quiet 2>/dev/null || true
 
-    # Remove quarantine
+    # Remove quarantine bits on final installed app
     mac_unquarantine "/Applications/${appName}"
     mac_unquarantine "${HOME}/Applications/${appName}"
 
@@ -175,12 +178,18 @@ mac_install_zip() {
         return 1
     fi
 
+    # Strip quarantine from the archive BEFORE extraction
+    xattr -cr "$zipFile" 2>/dev/null || true
+
     # Extract
     echo "[mac] Extracting ZIP..."
     if ! unzip -q "$zipFile" -d "$extractDir"; then
         echo "[mac] ERROR: unzip failed for ${name}."
         return 1
     fi
+
+    # Strip quarantine bits from all extracted content
+    xattr -cr "$extractDir" 2>/dev/null || true
 
     # Find .app
     local foundApp
@@ -196,15 +205,16 @@ mac_install_zip() {
         return 1
     fi
 
-    # Copy to /Applications
-    echo "[mac] Installing ${foundApp} → /Applications/"
+    # Copy to /Applications using ditto (preserves resource forks, avoids quarantine inherit)
+    echo "[mac] Installing ${foundApp} → /Applications/${appName}"
     rm -rf "/Applications/${appName}" 2>/dev/null || true
-    if ! cp -R "$foundApp" "/Applications/"; then
-        echo "[mac] ERROR: cp to /Applications failed. Trying ~/Applications..."
+    if ! ditto "$foundApp" "/Applications/${appName}"; then
+        echo "[mac] ERROR: ditto to /Applications failed. Trying ~/Applications..."
         mkdir -p "${HOME}/Applications"
-        cp -R "$foundApp" "${HOME}/Applications/" || return 1
+        ditto "$foundApp" "${HOME}/Applications/${appName}" || return 1
     fi
 
+    # Final quarantine clear on installed app
     mac_unquarantine "/Applications/${appName}"
     mac_unquarantine "${HOME}/Applications/${appName}"
 
@@ -246,12 +256,18 @@ mac_install_targz() {
         return 1
     fi
 
+    # Strip quarantine from archive before extraction
+    xattr -cr "$tarFile" 2>/dev/null || true
+
     # Extract
     echo "[mac] Extracting tar.gz..."
     if ! tar -xzf "$tarFile" -C "$extractDir"; then
         echo "[mac] ERROR: tar extraction failed for ${name}."
         return 1
     fi
+
+    # Strip quarantine from extracted content
+    xattr -cr "$extractDir" 2>/dev/null || true
 
     # Find .app
     local foundApp
@@ -267,15 +283,16 @@ mac_install_targz() {
         return 1
     fi
 
-    # Copy to /Applications
-    echo "[mac] Installing ${foundApp} → /Applications/"
+    # Copy to /Applications using ditto (preserves resource forks)
+    echo "[mac] Installing ${foundApp} → /Applications/${appName}"
     rm -rf "/Applications/${appName}" 2>/dev/null || true
-    if ! cp -R "$foundApp" "/Applications/"; then
-        echo "[mac] ERROR: cp to /Applications failed. Trying ~/Applications..."
+    if ! ditto "$foundApp" "/Applications/${appName}"; then
+        echo "[mac] ERROR: ditto to /Applications failed. Trying ~/Applications..."
         mkdir -p "${HOME}/Applications"
-        cp -R "$foundApp" "${HOME}/Applications/" || return 1
+        ditto "$foundApp" "${HOME}/Applications/${appName}" || return 1
     fi
 
+    # Final quarantine clear
     mac_unquarantine "/Applications/${appName}"
     mac_unquarantine "${HOME}/Applications/${appName}"
 
@@ -329,12 +346,18 @@ mac_install_7z() {
         return 1
     fi
 
+    # Strip quarantine from archive before extraction
+    xattr -cr "$archiveFile" 2>/dev/null || true
+
     # Extract
     echo "[mac] Extracting .7z archive..."
     if ! ${_7z_cmd} x "$archiveFile" -o"$extractDir" -y 2>&1; then
         echo "[mac] ERROR: 7z extraction failed for ${name}."
         return 1
     fi
+
+    # Strip quarantine from extracted content
+    xattr -cr "$extractDir" 2>/dev/null || true
 
     # Find .app in extracted content
     local foundApp
@@ -350,15 +373,16 @@ mac_install_7z() {
         return 1
     fi
 
-    # Copy to /Applications
-    echo "[mac] Installing ${foundApp} → /Applications/"
+    # Copy to /Applications using ditto (preserves resource forks)
+    echo "[mac] Installing ${foundApp} → /Applications/${appName}"
     rm -rf "/Applications/${appName}" 2>/dev/null || true
-    if ! cp -R "$foundApp" "/Applications/"; then
-        echo "[mac] ERROR: cp to /Applications failed. Trying ~/Applications..."
+    if ! ditto "$foundApp" "/Applications/${appName}"; then
+        echo "[mac] ERROR: ditto to /Applications failed. Trying ~/Applications..."
         mkdir -p "${HOME}/Applications"
-        cp -R "$foundApp" "${HOME}/Applications/" || return 1
+        ditto "$foundApp" "${HOME}/Applications/${appName}" || return 1
     fi
 
+    # Final quarantine clear
     mac_unquarantine "/Applications/${appName}"
     mac_unquarantine "${HOME}/Applications/${appName}"
 
