@@ -43,18 +43,21 @@ if [ "$(uname)" != "Linux" ]; then
 	# Prepend Homebrew rsync to PATH so all downstream rsync calls use it
 	PATH="$(brew --prefix rsync)/bin:$PATH"
 
-	# ── C3: Self-heal stale backend (wrong remote or missing darwin/ dir) ──
-	# Handles the case where the user ran setup.sh directly against a stale upstream clone.
+	# ── C3: Self-heal stale backend (wrong remote, missing darwin/, or version lag) ──
 	_WANTED_REMOTE="https://github.com/ygordreyer/EmuDeck.git"
 	if [ -d "${emudeckBackend}/.git" ]; then
 		_cur_remote=$(cd "$emudeckBackend" && git config --get remote.origin.url 2>/dev/null || true)
-		if [ "$_cur_remote" != "$_WANTED_REMOTE" ] || [ ! -d "${emudeckBackend}/darwin" ]; then
-			echo "[EmuDeck] Backend is stale or wrong remote (found: ${_cur_remote:-none}) — refreshing from $_WANTED_REMOTE..."
-			cd "$emudeckBackend"
-			git remote set-url origin "$_WANTED_REMOTE"
-			git fetch --depth=1 origin "${1:-main}"
-			git reset --hard "origin/${1:-main}"
-			# Re-exec so we run the freshly-pulled setup.sh, not the stale one.
+		# Ensure remote URL is correct
+		if [ "$_cur_remote" != "$_WANTED_REMOTE" ]; then
+			git -C "$emudeckBackend" remote set-url origin "$_WANTED_REMOTE"
+		fi
+		# Always fetch quietly and check if installed backend is behind GitHub
+		git -C "$emudeckBackend" fetch --depth=1 origin "${1:-main}" --quiet 2>/dev/null || true
+		_installed_sha=$(git -C "$emudeckBackend" rev-parse HEAD 2>/dev/null || echo "unknown")
+		_remote_sha=$(git -C "$emudeckBackend" rev-parse FETCH_HEAD 2>/dev/null || echo "new")
+		if [ "$_installed_sha" != "$_remote_sha" ] || [ ! -d "${emudeckBackend}/darwin" ]; then
+			echo "[EmuDeck] Backend update available (${_installed_sha:0:8} → ${_remote_sha:0:8}) — updating..."
+			git -C "$emudeckBackend" reset --hard FETCH_HEAD
 			export EMUDECK_BASH_REEXEC=1
 			exec "${BASH:-bash}" "$0" "$@"
 		fi

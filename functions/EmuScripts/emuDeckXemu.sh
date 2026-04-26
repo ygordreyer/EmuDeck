@@ -9,17 +9,20 @@ Xemu_configPath_mac="${HOME}/Library/Application Support/xemu"
 Xemu_configFile_mac="${HOME}/Library/Application Support/xemu/xemu.toml"
 
 # https://xboxdevwiki.net/EEPROM
-declare -A Xemu_languages
-Xemu_languages=(
-["en"]=1
-["ja"]=2
-["de"]=3
-["fr"]=4
-["es"]=5
-["it"]=6
-["ko"]=7
-["zh"]=8
-["pt"]=9)
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A Xemu_languages
+    Xemu_languages=(
+    ["en"]=1
+    ["ja"]=2
+    ["de"]=3
+    ["fr"]=4
+    ["es"]=5
+    ["it"]=6
+    ["ko"]=7
+    ["zh"]=8
+    ["pt"]=9)
+fi
 
 #cleanupOlderThings
 Xemu_cleanup(){

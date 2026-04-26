@@ -13,18 +13,21 @@ RPCS3_configPath_mac="${HOME}/Library/Application Support/rpcs3"
 RPCS3_VFSConf_mac="${HOME}/Library/Application Support/rpcs3/vfs.yml"
 RPCS3_configFile_mac="${HOME}/Library/Application Support/rpcs3/config.yml"
 
-declare -A RPCS3_languages
-RPCS3_languages=(
-["ja"]=""
-["en"]="English (US)"
-["fr"]="French"
-["de"]="German"
-["it"]="Italian"
-["es"]="Spanish"
-["ko"]="Korean"
-["nl"]="Dutch"
-["pt"]="Portiguese (Portugal)"
-["ru"]="Russian")
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A RPCS3_languages
+    RPCS3_languages=(
+    ["ja"]=""
+    ["en"]="English (US)"
+    ["fr"]="French"
+    ["de"]="German"
+    ["it"]="Italian"
+    ["es"]="Spanish"
+    ["ko"]="Korean"
+    ["nl"]="Dutch"
+    ["pt"]="Portiguese (Portugal)"
+    ["ru"]="Russian")
+fi
 
 
 #cleanupOlderThings

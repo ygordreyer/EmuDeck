@@ -158,7 +158,7 @@ Xenia_wipeSettings(){
 #Uninstall
 Xenia_uninstall(){
 	setMSG "Uninstalling $Xenia_emuName. Saves and ROMs will be retained in the ROMs folder."
-	find ${romsPath}/xbox360 -mindepth 1 \( -name roms -o -name content \) -prune -o -exec rm -rf '{}' \; &>> /dev/null
+	find ${romsPath}/xbox360 -mindepth 1 \( -name roms -o -name content \) -prune -o -exec rm -rf '{}' \; >/dev/null 2>&1
 	rm -rf $HOME/.local/share/applications/xenia.desktop &> /dev/null
 	rm -rf "${toolsPath}/launchers/xenia.sh"
 	rm -rf "$romsPath/emulators/xenia.sh"

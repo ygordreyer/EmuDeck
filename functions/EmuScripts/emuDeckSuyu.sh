@@ -8,37 +8,40 @@ suyu_emuPath="$emusFolder/suyu.AppImage"
 
 suyu_configFile="$HOME/.config/suyu/qt-config.ini"
 
-declare -A suyu_languages
-suyu_languages=(
-["ja"]=0
-["en"]=1
-["fr"]=2
-["de"]=3
-["it"]=4
-["es"]=5
-["zh"]=6
-["ko"]=7
-["nl"]=8
-["pt"]=9
-["ru"]=10
-["tw"]=11) # TODO: not all langs but we need to switch to full lang codes to support those
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A suyu_languages
+    suyu_languages=(
+    ["ja"]=0
+    ["en"]=1
+    ["fr"]=2
+    ["de"]=3
+    ["it"]=4
+    ["es"]=5
+    ["zh"]=6
+    ["ko"]=7
+    ["nl"]=8
+    ["pt"]=9
+    ["ru"]=10
+    ["tw"]=11) # TODO: not all langs but we need to switch to full lang codes to support those
 
-# https://github.com/suyu-emu/suyu/blob/master/src/suyu/configuration/configure_system.ui#L272-L309
-declare -A suyu_regions
-suyu_regions=(
-["ja"]=0 # Japan
-["en"]=1 # USA
-["fr"]=2 # Europe
-["de"]=2 # Europe
-["it"]=2 # Europe
-["es"]=2 # Europe
-["zh"]=4 # China
-["ko"]=5 # Korea
-["nl"]=2 # Europe
-["pt"]=2 # Europe
-["ru"]=2 # Europe?
-["tw"]=6 # Taiwan
-) # TODO: split lang from region?
+    # https://github.com/suyu-emu/suyu/blob/master/src/suyu/configuration/configure_system.ui#L272-L309
+    declare -A suyu_regions
+    suyu_regions=(
+    ["ja"]=0 # Japan
+    ["en"]=1 # USA
+    ["fr"]=2 # Europe
+    ["de"]=2 # Europe
+    ["it"]=2 # Europe
+    ["es"]=2 # Europe
+    ["zh"]=4 # China
+    ["ko"]=5 # Korea
+    ["nl"]=2 # Europe
+    ["pt"]=2 # Europe
+    ["ru"]=2 # Europe?
+    ["tw"]=6 # Taiwan
+    ) # TODO: split lang from region?
+fi
 
 #cleanupOlderThings
 

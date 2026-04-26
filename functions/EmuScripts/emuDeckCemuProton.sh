@@ -5,21 +5,24 @@ CemuProton_emuType="$emuDeckEmuTypeWindows"
 CemuProton_emuPath="${romsPath}/wiiu/Cemu.exe"
 CemuProton_cemuSettings="${romsPath}/wiiu/settings.xml"
 
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
 # https://github.com/cemu-project/Cemu/blob/main/src/config/CemuConfig.h#L158-L172
-declare -A CemuProton_languages
-CemuProton_languages=(
-["ja"]=0
-["en"]=1
-["fr"]=2
-["de"]=3
-["it"]=4
-["es"]=5
-["zh"]=6
-["ko"]=7
-["nl"]=8
-["pt"]=9
-["ru"]=10
-["tw"]=11)
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A CemuProton_languages
+    CemuProton_languages=(
+    ["ja"]=0
+    ["en"]=1
+    ["fr"]=2
+    ["de"]=3
+    ["it"]=4
+    ["es"]=5
+    ["zh"]=6
+    ["ko"]=7
+    ["nl"]=8
+    ["pt"]=9
+    ["ru"]=10
+    ["tw"]=11)
+fi
 
 #cleanupOlderThings
 CemuProton_cleanup(){
@@ -198,7 +201,7 @@ CemuProton_wipeSettings(){
 #Uninstall
 CemuProton_uninstall(){
 	setMSG "Uninstalling $CemuProton_emuName."
-	find ${romsPath}/wiiu -mindepth 1 \( -name roms -o -name mlc01 \) -prune -o -exec rm -rf '{}' \; &>> /dev/null
+	find ${romsPath}/wiiu -mindepth 1 \( -name roms -o -name mlc01 \) -prune -o -exec rm -rf '{}' \; >/dev/null 2>&1
 	rm -f "$HOME/.local/share/applications/Cemu (Proton).desktop" &> /dev/null
 }
 

@@ -10,37 +10,40 @@ Citron_configFile="$HOME/.config/citron/qt-config.ini"
 Citron_configPath_mac="${HOME}/Library/Application Support/citron"
 Citron_configFile_mac="${HOME}/Library/Application Support/citron/qt-config.ini"
 
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
 # https://github.com/citron-emu/citron/blob/master/src/core/file_sys/control_metadata.cpp#L41-L60
-declare -A Citron_languages
-Citron_languages=(
-["ja"]=0
-["en"]=1
-["fr"]=2
-["de"]=3
-["it"]=4
-["es"]=5
-["zh"]=6
-["ko"]=7
-["nl"]=8
-["pt"]=9
-["ru"]=10
-["tw"]=11)
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A Citron_languages
+    Citron_languages=(
+    ["ja"]=0
+    ["en"]=1
+    ["fr"]=2
+    ["de"]=3
+    ["it"]=4
+    ["es"]=5
+    ["zh"]=6
+    ["ko"]=7
+    ["nl"]=8
+    ["pt"]=9
+    ["ru"]=10
+    ["tw"]=11)
 
-declare -A Citron_regions
-Citron_regions=(
-["ja"]=0 # Japan
-["en"]=1 # USA
-["fr"]=2 # Europe
-["de"]=2 # Europe
-["it"]=2 # Europe
-["es"]=2 # Europe
-["zh"]=4 # China
-["ko"]=5 # Korea
-["nl"]=2 # Europe
-["pt"]=2 # Europe
-["ru"]=2 # Europe?
-["tw"]=6 # Taiwan
-)
+    declare -A Citron_regions
+    Citron_regions=(
+    ["ja"]=0 # Japan
+    ["en"]=1 # USA
+    ["fr"]=2 # Europe
+    ["de"]=2 # Europe
+    ["it"]=2 # Europe
+    ["es"]=2 # Europe
+    ["zh"]=4 # China
+    ["ko"]=5 # Korea
+    ["nl"]=2 # Europe
+    ["pt"]=2 # Europe
+    ["ru"]=2 # Europe?
+    ["tw"]=6 # Taiwan
+    )
+fi
 
 #cleanupOlderThings
 Citron_cleanup() {

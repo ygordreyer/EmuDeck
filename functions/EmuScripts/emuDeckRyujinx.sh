@@ -11,36 +11,39 @@ Ryujinx_controllerFile="$HOME/.config/Ryujinx/profiles/controller/Deck.json"
 Ryujinx_configPath_mac="${HOME}/Library/Application Support/Ryujinx"
 Ryujinx_configFile_mac="${HOME}/Library/Application Support/Ryujinx/Config.json"
 
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
 # https://github.com/Ryujinx/Ryujinx/blob/master/Ryujinx.Ui.Common/Configuration/System/Language.cs
-declare -A Ryujinx_languages
-Ryujinx_languages=(
-["ja"]="Japanese"
-["en"]="AmericanEnglish"
-["fr"]="French"
-["de"]="German"
-["it"]="Italian"
-["es"]="Spanish"
-["zh"]="Chinese"
-["ko"]="Korean"
-["nl"]="Dutch"
-["pt"]="Portuguese"
-["ru"]="Russian"
-["tw"]="Taiwanese")
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A Ryujinx_languages
+    Ryujinx_languages=(
+    ["ja"]="Japanese"
+    ["en"]="AmericanEnglish"
+    ["fr"]="French"
+    ["de"]="German"
+    ["it"]="Italian"
+    ["es"]="Spanish"
+    ["zh"]="Chinese"
+    ["ko"]="Korean"
+    ["nl"]="Dutch"
+    ["pt"]="Portuguese"
+    ["ru"]="Russian"
+    ["tw"]="Taiwanese")
 
-declare -A Ryujinx_regions
-Ryujinx_regions=(
-["ja"]="Japan"
-["en"]="USA"
-["fr"]="Europe"
-["de"]="Europe"
-["it"]="Europe"
-["es"]="Europe"
-["zh"]="China"
-["ko"]="Korea"
-["nl"]="Europe"
-["pt"]="Europe"
-["ru"]="Europe"
-["tw"]="Taiwan")
+    declare -A Ryujinx_regions
+    Ryujinx_regions=(
+    ["ja"]="Japan"
+    ["en"]="USA"
+    ["fr"]="Europe"
+    ["de"]="Europe"
+    ["it"]="Europe"
+    ["es"]="Europe"
+    ["zh"]="China"
+    ["ko"]="Korea"
+    ["nl"]="Europe"
+    ["pt"]="Europe"
+    ["ru"]="Europe"
+    ["tw"]="Taiwan")
+fi
 
 #cleanupOlderThings
 Ryujinx_cleanup(){

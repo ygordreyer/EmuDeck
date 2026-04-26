@@ -8,38 +8,41 @@ Yuzu_emuPath="$emusFolder/yuzu.AppImage"
 Yuzu_configFile="$HOME/.config/yuzu/qt-config.ini"
 Yuzu_inputConfigFile="$HOME/.config/yuzu/input/emudeck.ini"
 
+# Guard: declare -A requires bash 4+ (macOS ships bash 3.2)
 # https://github.com/yuzu-emu/yuzu/blob/master/src/core/file_sys/control_metadata.cpp#L41-L60
-declare -A Yuzu_languages
-Yuzu_languages=(
-["ja"]=0
-["en"]=1
-["fr"]=2
-["de"]=3
-["it"]=4
-["es"]=5
-["zh"]=6
-["ko"]=7
-["nl"]=8
-["pt"]=9
-["ru"]=10
-["tw"]=11) # TODO: not all langs but we need to switch to full lang codes to support those
+if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+    declare -A Yuzu_languages
+    Yuzu_languages=(
+    ["ja"]=0
+    ["en"]=1
+    ["fr"]=2
+    ["de"]=3
+    ["it"]=4
+    ["es"]=5
+    ["zh"]=6
+    ["ko"]=7
+    ["nl"]=8
+    ["pt"]=9
+    ["ru"]=10
+    ["tw"]=11) # TODO: not all langs but we need to switch to full lang codes to support those
 
-# https://github.com/yuzu-emu/yuzu/blob/master/src/yuzu/configuration/configure_system.ui#L272-L309
-declare -A Yuzu_regions
-Yuzu_regions=(
-["ja"]=0 # Japan
-["en"]=1 # USA
-["fr"]=2 # Europe
-["de"]=2 # Europe
-["it"]=2 # Europe
-["es"]=2 # Europe
-["zh"]=4 # China
-["ko"]=5 # Korea
-["nl"]=2 # Europe
-["pt"]=2 # Europe
-["ru"]=2 # Europe?
-["tw"]=6 # Taiwan
-) # TODO: split lang from region?
+    # https://github.com/yuzu-emu/yuzu/blob/master/src/yuzu/configuration/configure_system.ui#L272-L309
+    declare -A Yuzu_regions
+    Yuzu_regions=(
+    ["ja"]=0 # Japan
+    ["en"]=1 # USA
+    ["fr"]=2 # Europe
+    ["de"]=2 # Europe
+    ["it"]=2 # Europe
+    ["es"]=2 # Europe
+    ["zh"]=4 # China
+    ["ko"]=5 # Korea
+    ["nl"]=2 # Europe
+    ["pt"]=2 # Europe
+    ["ru"]=2 # Europe?
+    ["tw"]=6 # Taiwan
+    ) # TODO: split lang from region?
+fi
 
 #cleanupOlderThings
 Yuzu_cleanup() {
