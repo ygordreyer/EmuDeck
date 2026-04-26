@@ -8,8 +8,13 @@ DuckStation_releaseURL=""
 DuckStation_configPath="$HOME/.local/share/duckstation"
 DuckStation_configFile="$HOME/.local/share/duckstation/settings.ini"
 
+# macOS-specific paths
+DuckStation_configPath_mac="${HOME}/Library/Application Support/DuckStation"
+DuckStation_configFile_mac="${HOME}/Library/Application Support/DuckStation/settings.ini"
+
 #Install
 DuckStation_install(){
+	if [ "$(uname)" != "Linux" ]; then DuckStation_install_mac "$@"; return $?; fi
 	echo "Begin $DuckStation_emuName Install"
 	local showProgress="$1"
 	local url=$(getReleaseURLGH "stenzek/duckstation" "AppImage" "x64.")
@@ -29,8 +34,14 @@ DuckStation_install(){
 	fi
 }
 
+DuckStation_install_mac(){
+	mac_install_cask "DuckStation" "duckstation" "DuckStation.app" || return 1
+	mac_deploy_launcher "duckstation" "/Applications/DuckStation.app"
+}
+
 #ApplyInitialSettings
 DuckStation_init(){
+	if [ "$(uname)" != "Linux" ]; then DuckStation_init_mac; return $?; fi
 	setMSG "Initializing $DuckStation_emuName settings."
 	configEmuAI "$DuckStation_emuName" "duckstation"  "$DuckStation_configPath" "$emudeckBackend/configs/duckstation" "true"
 	DuckStation_setupStorage
@@ -42,6 +53,23 @@ DuckStation_init(){
 	RetroArch_setRetroAchievements
 	#SRM_createParsers
 	DuckStation_flushEmulatorLauncher
+}
+
+DuckStation_init_mac(){
+	setMSG "Initializing $DuckStation_emuName settings (macOS)."
+	local cfgDir="${DuckStation_configPath_mac}"
+	mkdir -p "$cfgDir"
+	configEmuAI "$DuckStation_emuName" "duckstation" "$cfgDir" "$emudeckBackend/configs/duckstation" "true"
+	# Set paths in config file
+	local cfgFile="${DuckStation_configFile_mac}"
+	if [ -f "$cfgFile" ]; then
+		iniFieldUpdate "$cfgFile" "GameList" "RecursivePaths" "${romsPath}/psx"
+		iniFieldUpdate "$cfgFile" "BIOS" "SearchDirectory" "${biosPath}"
+		iniFieldUpdate "$cfgFile" "SaveStates" "Directory" "${savesPath}/duckstation/states"
+		iniFieldUpdate "$cfgFile" "MemoryCards" "Directory" "${savesPath}/duckstation/saves"
+	fi
+	mkdir -p "${savesPath}/duckstation/states"
+	mkdir -p "${savesPath}/duckstation/saves"
 }
 
 #update
@@ -99,6 +127,7 @@ DuckStation_wipe(){
 
 #Uninstall
 DuckStation_uninstall(){
+	if [ "$(uname)" != "Linux" ]; then mac_uninstall_cask "DuckStation" "duckstation" "DuckStation.app"; return; fi
 	setMSG "Uninstalling ${DuckStation_emuName}."
 	uninstallEmuAI $DuckStation_emuName "DuckStation" "" "emulator"
 }
@@ -154,6 +183,7 @@ DuckStation_finalize(){
 }
 
 DuckStation_IsInstalled(){
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "DuckStation.app"; return; fi
 	if [ -e "$DuckStation_emuPath" ]; then
 		echo "true"
 	else

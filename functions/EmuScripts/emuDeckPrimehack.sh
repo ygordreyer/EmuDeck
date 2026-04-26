@@ -15,6 +15,7 @@ Primehack_cleanup(){
 
 #Install
 Primehack_install() {
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Primehack" "No official macOS build available"; return 0; fi
 	setMSG "Installing $Primehack_emuName"
 	installEmuFP "${Primehack_emuName}" "${Primehack_emuPath}" "emulator" ""
 }

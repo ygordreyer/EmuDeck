@@ -8,6 +8,11 @@ RPCS3_VFSConf="$HOME/.config/rpcs3/vfs.yml"
 RPCS3_migrationFlag="$emudeckFolder/.${RPCS3_emuName}MigrationCompleted"
 RPCS3_configFile="$HOME/.config/rpcs3/config.yml"
 
+# macOS-specific paths
+RPCS3_configPath_mac="${HOME}/Library/Application Support/rpcs3"
+RPCS3_VFSConf_mac="${HOME}/Library/Application Support/rpcs3/vfs.yml"
+RPCS3_configFile_mac="${HOME}/Library/Application Support/rpcs3/config.yml"
+
 declare -A RPCS3_languages
 RPCS3_languages=(
 ["ja"]=""
@@ -113,6 +118,7 @@ RPCS3_ApiGetUpdateInfo(){
 
 #Install
 RPCS3_install(){
+	if [ "$(uname)" != "Linux" ]; then RPCS3_install_mac "$@"; return $?; fi
 	setMSG "Installing RPCS3"
 
 	# Migrates configurations to RPCS3 AppImage
@@ -143,8 +149,22 @@ RPCS3_install(){
 	flatpak override net.rpcs3.RPCS3 --filesystem=host --user
 }
 
+RPCS3_install_mac(){
+	setMSG "Installing RPCS3 (macOS)"
+	# RPCS3 macOS releases ship as .7z (not .dmg) — requires p7zip
+	local url
+	url=$(mac_get_gh_release_url "RPCS3/rpcs3-binaries-mac" "rpcs3-.*_macos\.7z" "rpcs3-.*_macos.*\.7z")
+	if [ -z "$url" ]; then
+		echo "[mac] ERROR: Could not find RPCS3 macOS release. Check https://github.com/RPCS3/rpcs3-binaries-mac"
+		return 1
+	fi
+	mac_install_7z "RPCS3" "$url" "RPCS3.app" || return 1
+	mac_deploy_launcher "rpcs3" "/Applications/RPCS3.app"
+}
+
 #ApplyInitialSettings
 RPCS3_init(){
+	if [ "$(uname)" != "Linux" ]; then RPCS3_init_mac; return $?; fi
 	RPCS3_migrate
 	configEmuAI "$RPCS3_emuName" "config" "$HOME/.config/rpcs3" "$emudeckBackend/configs/rpcs3" "true"
 	RPCS3_setupStorage
@@ -154,6 +174,25 @@ RPCS3_init(){
 	RPCS3_flushEmulatorLauncher
 	RPCS3_setLanguage
 
+}
+
+RPCS3_init_mac(){
+	setMSG "Initializing RPCS3 (macOS)"
+	local cfgDir="${RPCS3_configPath_mac}"
+	mkdir -p "$cfgDir"
+	configEmuAI "$RPCS3_emuName" "config" "$cfgDir" "$emudeckBackend/configs/rpcs3" "true"
+	# Setup storage dirs
+	mkdir -p "$storagePath/rpcs3/dev_hdd0"
+	mkdir -p "$romsPath/ps3"
+	# VFS config - set ROM and HDD paths
+	local vfsConf="${RPCS3_VFSConf_mac}"
+	if [ -f "$vfsConf" ]; then
+		iniFieldUpdate "$vfsConf" "" "/dev_hdd0/" "$storagePath/rpcs3/dev_hdd0/" ": "
+		iniFieldUpdate "$vfsConf" "" "/games/" "$romsPath/ps3/" ": "
+	fi
+	# Setup saves symlink from storage to savesPath
+	mac_link_save "rpcs3" "rpcs3/dev_hdd0/home/00000001/savedata" "$savesPath/rpcs3/saves"
+	mac_link_save "rpcs3" "rpcs3/dev_hdd0/home/00000001/trophy" "$savesPath/rpcs3/trophy"
 }
 
 RPCS3_setLanguage(){
@@ -225,6 +264,7 @@ RPCS3_wipe(){
 
 #Uninstall
 RPCS3_uninstall(){
+	if [ "$(uname)" != "Linux" ]; then mac_uninstall_app "RPCS3.app"; return; fi
 	setMSG "Uninstalling $RPCS3_emuName."
 	uninstallEmuAI "$RPCS3_emuName" "rpcs3" "" "emulator"
 	#RPCS3_wipe
@@ -279,6 +319,7 @@ RPCS3_finalize(){
 }
 
 RPCS3_IsInstalled(){
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "RPCS3.app"; return; fi
 	local emuType=$1 # if empty we assume the caller doesn't care what type is installed, so we can check both
 	# if flatpak type or no type is requested and we haven't yet migrated, check flatpak installation status
 	if ([ "$emuType" == "$emuDeckEmuTypeFlatpak" ] || [ -z "$emuType" ]) && [ "$(RPCS3_IsMigrated)" != "true" ] && [ "$(isFpInstalled "$RPCS3_emuPathFlatpak")" == "true" ]; then

@@ -178,8 +178,10 @@ createFolders
 
 #setup Proton-Launch.sh
 #because this path gets updated by sed, we really should be installing it every and allowing it to be updated every time. In case the user changes their path.
-cp "$emudeckBackend/tools/proton-launch.sh" "${toolsPath}/proton-launch.sh"
-chmod +x "${toolsPath}/proton-launch.sh"
+if [ "$(uname)" == "Linux" ]; then
+    cp "$emudeckBackend/tools/proton-launch.sh" "${toolsPath}/proton-launch.sh"
+    chmod +x "${toolsPath}/proton-launch.sh"
+fi
 cp "$emudeckBackend/tools/appID.py" "${toolsPath}/appID.py"
 
 # Setup emu-launch.sh
@@ -302,10 +304,12 @@ wait # Wait for any remaining jobs to finish
 
 
 #Always install
-BINUP_install &
+if [ "$(uname)" == "Linux" ]; then
+    BINUP_install &
+    FlatpakUP_install &
+fi
 AutoCopy_install &
 server_install &
-FlatpakUP_install &
 CHD_install &
 
 #

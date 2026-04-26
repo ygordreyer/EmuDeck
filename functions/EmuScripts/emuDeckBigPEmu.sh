@@ -14,6 +14,7 @@ BigPEmu_cleanup(){
 
 #Install
 BigPEmu_install(){
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "BigPEmu" "Windows-only emulator — not available on macOS"; return 0; fi
 	setMSG "Installing $BigPEmu_emuName"
 
 	mkdir -p $BigPEmu_appData

@@ -27,3 +27,7 @@ if [ -n "${Home:-}" ]; then
 fi
 
 export emulationPath romsPath toolsPath biosPath savesPath storagePath Home
+
+# macOS Library/Application Support base path
+appSupportPath="${HOME}/Library/Application Support"
+export appSupportPath

@@ -5,6 +5,10 @@ PCSX2QT_emuType="$emuDeckEmuTypeAppImage"
 PCSX2QT_emuPath="$emusFolder/pcsx2-Qt.AppImage"
 PCSX2QT_configFile="$HOME/.config/PCSX2/inis/PCSX2.ini"
 
+# macOS-specific paths
+PCSX2QT_configPath_mac="${HOME}/Library/Application Support/PCSX2/inis"
+PCSX2QT_configFile_mac="${HOME}/Library/Application Support/PCSX2/inis/PCSX2.ini"
+
 #cleanupOlderThings
 PCSX2QT_cleanup() {
 	echo "NYI"
@@ -12,6 +16,7 @@ PCSX2QT_cleanup() {
 
 #Install
 PCSX2QT_install() {
+	if [ "$(uname)" != "Linux" ]; then PCSX2QT_install_mac "$@"; return $?; fi
 	echo "Begin PCSX2-QT Install"
 	local showProgress="$1"
 
@@ -22,6 +27,11 @@ PCSX2QT_install() {
 		return 1
 	fi
 }
+
+PCSX2QT_install_mac() {
+	mac_install_cask "PCSX2-QT" "pcsx2" "PCSX2.app" || return 1
+	mac_deploy_launcher "pcsx2-qt" "/Applications/PCSX2.app"
+}
 #Fix for autoupdate
 Pcsx2_install(){
 	PCSX2QT_install
@@ -29,6 +39,7 @@ Pcsx2_install(){
 
 #ApplyInitialSettings
 PCSX2QT_init() {
+	if [ "$(uname)" != "Linux" ]; then PCSX2QT_init_mac; return $?; fi
 	setMSG "Initializing $PCSX2QT_emuName settings."
 
 	if [ -e "$PCSX2QT_configFile" ]; then
@@ -51,6 +62,32 @@ PCSX2QT_init() {
 
 	linkToStorageFolder pcsx2 cheats "$HOME/.config/PCSX2/cheats"
 
+}
+
+PCSX2QT_init_mac() {
+	setMSG "Initializing $PCSX2QT_emuName settings (macOS)."
+	local cfgDir="${PCSX2QT_configPath_mac}"
+	mkdir -p "$cfgDir"
+	configEmuAI "$PCSX2QT_emuName" "config" "$cfgDir" "$emudeckBackend/configs/pcsx2qt/.config/PCSX2" "true"
+	local cfgFile="${PCSX2QT_configFile_mac}"
+	mkdir -p "${savesPath}/pcsx2/states"
+	mkdir -p "${savesPath}/pcsx2/saves"
+	mkdir -p "${storagePath}/pcsx2/snaps"
+	mkdir -p "${storagePath}/pcsx2/cache"
+	mkdir -p "${storagePath}/pcsx2/textures"
+	mkdir -p "${storagePath}/pcsx2/covers"
+	if [ -f "$cfgFile" ]; then
+		iniFieldUpdate "$cfgFile" "UI" "ConfirmShutdown" "false"
+		iniFieldUpdate "$cfgFile" "UI" "SetupWizardIncomplete" "false"
+		iniFieldUpdate "$cfgFile" "Folders" "Bios" "${biosPath}"
+		iniFieldUpdate "$cfgFile" "Folders" "Snapshots" "${storagePath}/pcsx2/snaps"
+		iniFieldUpdate "$cfgFile" "Folders" "Savestates" "${savesPath}/pcsx2/states"
+		iniFieldUpdate "$cfgFile" "Folders" "MemoryCards" "${savesPath}/pcsx2/saves"
+		iniFieldUpdate "$cfgFile" "Folders" "Cache" "${storagePath}/pcsx2/cache"
+		iniFieldUpdate "$cfgFile" "Folders" "Covers" "${storagePath}/pcsx2/covers"
+		iniFieldUpdate "$cfgFile" "Folders" "Textures" "${storagePath}/pcsx2/textures"
+		iniFieldUpdate "$cfgFile" "GameList" "RecursivePaths" "${romsPath}/ps2"
+	fi
 }
 
 #update
@@ -221,6 +258,7 @@ PCSX2QT_wipe() {
 
 #Uninstall
 PCSX2QT_uninstall() {
+	if [ "$(uname)" != "Linux" ]; then mac_uninstall_cask "PCSX2-QT" "pcsx2" "PCSX2.app"; return; fi
 	setMSG "Uninstalling $PCSX2QT_emuName."
 	uninstallEmuAI "$PCSX2QT_emuName" "pcsx2-Qt" "" "emulator"
 	#PCSX2QT_wipe
@@ -264,6 +302,7 @@ PCSX2QT_finalize() {
 }
 
 PCSX2QT_IsInstalled() {
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "PCSX2.app"; return; fi
 	if [ -e "$PCSX2QT_emuPath" ]; then
 		echo "true"
 	else

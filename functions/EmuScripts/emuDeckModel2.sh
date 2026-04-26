@@ -12,6 +12,7 @@ Model2_cleanup(){
 
 #Install
 Model2_install(){
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Model2Emulator" "Windows-only emulator — not available on macOS"; return 0; fi
 	setMSG "Installing $Model2_emuName"
 
 	# Create the ROMs and pfx directory if they do not exist

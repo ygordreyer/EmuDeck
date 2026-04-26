@@ -8,6 +8,11 @@ Dolphin_configFileGFX="$HOME/.var/app/org.DolphinEmu.dolphin-emu/config/dolphin-
 Dolphin_gamecubeFile="$HOME/.var/app/org.DolphinEmu.dolphin-emu/config/dolphin-emu/GCPadNew.ini"
 Dolphin_releaseURL=""
 
+# macOS-specific paths
+Dolphin_configFile_mac="${HOME}/Library/Application Support/Dolphin/Config/Dolphin.ini"
+Dolphin_configFileGFX_mac="${HOME}/Library/Application Support/Dolphin/Config/GFX.ini"
+Dolphin_gamecubeFile_mac="${HOME}/Library/Application Support/Dolphin/Config/GCPadNew.ini"
+
 #cleanupOlderThings
 Dolphin_cleanup(){
     #backup old Dolphin input profiles, if the user wants to keep them
@@ -34,14 +39,20 @@ Dolphin_cleanup(){
 
 #Install
 Dolphin_install(){
+  if [ "$(uname)" != "Linux" ]; then Dolphin_install_mac "$@"; return $?; fi
   setMSG "${Dolphin_emuName}: Install"
   echo ""
 	installEmuFP "${Dolphin_emuName}" "${Dolphin_emuPath}" "emulator" ""
 }
 
+Dolphin_install_mac(){
+  mac_install_cask "Dolphin" "dolphin" "Dolphin.app" || return 1
+  mac_deploy_launcher "dolphin" "/Applications/Dolphin.app"
+}
+
 #ApplyInitialSettings
 Dolphin_init(){
-
+  if [ "$(uname)" != "Linux" ]; then Dolphin_init_mac; return $?; fi
   setMSG "${Dolphin_emuName}: Apply initial config"
   echo ""
 	configEmuFP "${Dolphin_emuName}" "${Dolphin_emuPath}" "true"
@@ -54,6 +65,24 @@ Dolphin_init(){
   Dolphin_flushSymlinks
 	#SRM_createParsers
     #Dolphin_DynamicInputTextures
+}
+
+Dolphin_init_mac(){
+  setMSG "${Dolphin_emuName}: Apply initial config (macOS)"
+  local cfgDir="${HOME}/Library/Application Support/Dolphin/Config"
+  mkdir -p "$cfgDir"
+  configEmuAI "$Dolphin_emuName" "config" "$cfgDir" "$emudeckBackend/configs/org.DolphinEmu.dolphin-emu/config/dolphin-emu" "true"
+  # Set ROM paths
+  local cfgFile="${cfgDir}/Dolphin.ini"
+  if [ -f "$cfgFile" ]; then
+    iniFieldUpdate "$cfgFile" "General" "ISOPath0" "${romsPath}/gc"
+    iniFieldUpdate "$cfgFile" "General" "ISOPath1" "${romsPath}/wii"
+    iniFieldUpdate "$cfgFile" "General" "ISOPaths" "2"
+  fi
+  # Setup saves
+  mac_link_save "dolphin" "Dolphin/GC" "${savesPath}/dolphin/GC"
+  mac_link_save "dolphin" "Dolphin/Wii" "${savesPath}/dolphin/Wii"
+  mac_link_save "dolphin" "Dolphin/StateSaves" "${savesPath}/dolphin/StateSaves"
 }
 
 #update
@@ -110,6 +139,7 @@ Dolphin_wipe(){
 
 #Uninstall
 Dolphin_uninstall(){
+    if [ "$(uname)" != "Linux" ]; then mac_uninstall_cask "Dolphin" "dolphin" "Dolphin.app"; return; fi
     uninstallEmuFP "${Dolphin_emuName}" "${Dolphin_emuPath}" "emulator" ""
 }
 
@@ -171,6 +201,7 @@ echo "NYI"
 }
 
 Dolphin_IsInstalled(){
+    if [ "$(uname)" != "Linux" ]; then mac_app_installed "Dolphin.app"; return; fi
     isFpInstalled "$Dolphin_emuPath"
 }
 
