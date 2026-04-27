@@ -13,6 +13,18 @@ if [[ -z "$emudeckBackend" ]]; then
     emudeckBackend="$HOME/.config/EmuDeck/backend/"
 fi
 
+# ── HARD GUARD: darwin/ must exist before we try to source any macOS scripts ──────────────
+# Root cause protection: if the backend was cloned from a branch without macOS support
+# (e.g., stale upstream 'beta'), the darwin/ directory won't exist. Fail loudly here
+# instead of producing 100 cryptic errors further down.
+if [ "$(uname)" != "Linux" ] && [ ! -d "${emudeckBackend}/darwin" ]; then
+    echo "[EmuDeck] FATAL: darwin/ directory is missing from backend at ${emudeckBackend}." >&2
+    echo "[EmuDeck] The backend was cloned from a branch without macOS support." >&2
+    echo "[EmuDeck] Fix: delete ~/.config/EmuDeck and relaunch EmuDeck to force a fresh re-clone." >&2
+    exit 1
+fi
+# ──────────────────────────────────────────────────────────────────────────────────────────
+
 #Vars
 source "$emudeckBackend"/vars.sh
 

@@ -45,19 +45,41 @@ if [ "$(uname)" != "Linux" ]; then
 
 	# ── C3: Self-heal stale backend (wrong remote, missing darwin/, or version lag) ──
 	_WANTED_REMOTE="https://github.com/ygordreyer/EmuDeck.git"
+	# !! macOS ALWAYS syncs against 'main' — never against beta/early.
+	# The Electron CI build stamps branch.json as "beta" but that branch on this fork
+	# may be stale upstream code without any macOS fixes. main is the canonical mac branch.
+	_c3_branch="main"
 	if [ -d "${emudeckBackend}/.git" ]; then
 		_cur_remote=$(cd "$emudeckBackend" && git config --get remote.origin.url 2>/dev/null || true)
 		# Ensure remote URL is correct
 		if [ "$_cur_remote" != "$_WANTED_REMOTE" ]; then
 			git -C "$emudeckBackend" remote set-url origin "$_WANTED_REMOTE"
 		fi
-		# Always fetch quietly and check if installed backend is behind GitHub
-		git -C "$emudeckBackend" fetch --depth=1 origin "${1:-main}" --quiet 2>/dev/null || true
+		# Always fetch quietly against main — the canonical macOS branch
+		git -C "$emudeckBackend" fetch --depth=1 origin "${_c3_branch}" --quiet 2>/dev/null || true
 		_installed_sha=$(git -C "$emudeckBackend" rev-parse HEAD 2>/dev/null || echo "unknown")
 		_remote_sha=$(git -C "$emudeckBackend" rev-parse FETCH_HEAD 2>/dev/null || echo "new")
 		if [ "$_installed_sha" != "$_remote_sha" ] || [ ! -d "${emudeckBackend}/darwin" ]; then
-			echo "[EmuDeck] Backend update available (${_installed_sha:0:8} → ${_remote_sha:0:8}) — updating..."
+			echo "[EmuDeck] Backend update available (${_installed_sha:0:8} → ${_remote_sha:0:8}) — syncing to ${_c3_branch}..."
 			git -C "$emudeckBackend" reset --hard FETCH_HEAD
+			# ── Post-reset sanity check: darwin/ MUST exist.
+			# If it doesn't, the fetched branch has no macOS support.
+			# Recover by deleting the stale backend and doing a full re-clone from main.
+			if [ ! -d "${emudeckBackend}/darwin" ]; then
+				echo "[EmuDeck] CRITICAL: darwin/ missing after reset — recovering with full re-clone from main..."
+				rm -rf "${emudeckBackend}"
+				mkdir -p "${emudeckBackend}"
+				if ! git clone --no-single-branch --depth=1 "$_WANTED_REMOTE" "${emudeckBackend}" 2>&1; then
+					echo "[EmuDeck] FATAL: git clone failed. Check your internet connection and try again."
+					exit 1
+				fi
+				git -C "$emudeckBackend" checkout main 2>/dev/null || true
+				if [ ! -d "${emudeckBackend}/darwin" ]; then
+					echo "[EmuDeck] FATAL: darwin/ still missing after full re-clone from main. Aborting."
+					exit 1
+				fi
+				echo "[EmuDeck] Re-clone successful. darwin/ directory restored."
+			fi
 			export EMUDECK_BASH_REEXEC=1
 			exec "${BASH:-bash}" "$0" "$@"
 		fi
