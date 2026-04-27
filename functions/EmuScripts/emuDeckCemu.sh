@@ -486,6 +486,7 @@ Cemu_update () {
 
 # Is Installed
 Cemu_IsInstalled () {
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "Cemu.app"; return; fi
 	Cemu_functions "IsInstalled"
 }
 

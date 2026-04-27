@@ -28,8 +28,9 @@ Ppsspp_install(){
 }
 
 PPSSPP_install_mac(){
-	mac_install_cask "PPSSPP" "ppsspp" "PPSSPP.app" || return 1
-	mac_deploy_launcher "ppsspp" "/Applications/PPSSPP.app"
+	# Brew cask 'ppsspp' installs the app as PPSSPPSDL.app (SDL backend build)
+	mac_install_cask "PPSSPP" "ppsspp" "PPSSPPSDL.app" || return 1
+	mac_deploy_launcher "ppsspp" "/Applications/PPSSPPSDL.app"
 }
 
 #ApplyInitialSettings
@@ -136,7 +137,8 @@ PPSSPP_bezelOff(){
 }
 
 PPSSPP_IsInstalled(){
-	if [ "$(uname)" != "Linux" ]; then mac_app_installed "PPSSPP.app"; return; fi
+	# Brew cask 'ppsspp' installs as PPSSPPSDL.app (SDL backend build), not PPSSPP.app
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "PPSSPPSDL.app"; return; fi
 	isFpInstalled "$PPSSPP_emuPath"
 }
 

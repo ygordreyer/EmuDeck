@@ -35,7 +35,15 @@ DuckStation_install(){
 }
 
 DuckStation_install_mac(){
-	mac_install_cask "DuckStation" "duckstation" "DuckStation.app" || return 1
+	setMSG "Installing DuckStation (macOS)"
+	echo "[mac] DuckStation: brew cask removed from Homebrew — using GitHub release"
+	local url
+	url=$(mac_get_gh_release_url "stenzek/duckstation" "duckstation-mac-release\.zip" "")
+	if [ -z "$url" ]; then
+		url="https://github.com/stenzek/duckstation/releases/latest/download/duckstation-mac-release.zip"
+		echo "[mac] DuckStation: using fallback URL $url"
+	fi
+	mac_install_zip "DuckStation" "$url" "DuckStation.app" || return 1
 	mac_deploy_launcher "duckstation" "/Applications/DuckStation.app"
 }
 

@@ -2638,6 +2638,7 @@ RetroArch_MesenNES_setUpHdPacks(){
 
 
 RetroArch_IsInstalled(){
+	if [ "$(uname)" != "Linux" ]; then mac_app_installed "RetroArch.app"; return; fi
 	isFpInstalled "$RetroArch_emuPath"
 }
 
