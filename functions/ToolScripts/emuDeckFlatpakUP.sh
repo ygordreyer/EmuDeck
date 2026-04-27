@@ -7,6 +7,8 @@ FlatpakUP_toolPath="${toolsPath}/flatpakupdate/flatpakupdate.sh"
 
 
 FlatpakUp_install(){
+	# macOS: Flatpak is Linux-only.
+	if [ "$(uname)" != "Linux" ]; then echo "[EmuDeck] Skipping FlatpakUP — Flatpak is Linux-only."; return 0; fi
 
 	rsync -avhp --mkpath "$emudeckBackend/tools/flatpakupdate" "$toolsPath/"
 

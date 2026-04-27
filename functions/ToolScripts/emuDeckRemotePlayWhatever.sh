@@ -1,8 +1,10 @@
 #!/bin/bash
 
-RemotePlayWhatever_install(){		
+RemotePlayWhatever_install(){
+	# macOS: RemotePlayWhatever is a Linux AppImage — not available on macOS.
+	if [ "$(uname)" != "Linux" ]; then echo "[EmuDeck] Skipping RemotePlayWhatever — Linux AppImage only."; return 0; fi
 	mkdir -p "${toolsPath}/remoteplaywhatever"
-	installEmuAI "RemotePlayWhatever"  "$(getReleaseURLGH "m4dEngi/RemotePlayWhatever" "AppImage")" 
+	installEmuAI "RemotePlayWhatever"  "$(getReleaseURLGH "m4dEngi/RemotePlayWhatever" "AppImage")"
 	RemotePlayWhatever_init
 }
 

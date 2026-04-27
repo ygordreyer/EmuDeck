@@ -14,6 +14,7 @@ RPCS3_cleanup(){
 
 #Install
 RPCS3_install(){
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "RPCS3Legacy" "Legacy Flatpak install — superseded by RPCS3 native (emuDeckRPCS3)"; return 0; fi
 	installEmuFP "${RPCS3_remuName}" "${RPCS3_emuPath}"
 }
 

@@ -61,6 +61,7 @@ Yuzu_cleanup() {
 
 #Install
 Yuzu_install() {
+    if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Yuzu" "Project discontinued — Nintendo DMCA takedown"; return 0; fi
     echo "Begin Yuzu Install"
 
     local showProgress=$1

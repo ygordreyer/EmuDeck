@@ -1,5 +1,10 @@
 #!/bin/bash
 installEmuAI(){
+    # macOS guard: AppImages are Linux-only. Per-emulator _install_mac must use mac_install_* instead.
+    if [ "$(uname)" != "Linux" ]; then
+        echo "[ERROR] installEmuAI called on macOS for '${1:-unknown}' — caller must use mac_install_cask/dmg/zip/7z instead of installEmuAI."
+        return 1
+    fi
     local name="$1"
     local scriptName="$2"
     local url="$3"

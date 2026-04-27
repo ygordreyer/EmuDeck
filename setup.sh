@@ -97,6 +97,24 @@ DARWIN_SETTINGS
 
 	# Decky Loader is Linux/SteamOS-only — disable on macOS
 	doInstallRetroLibrary=false
+
+	# ── AppImage cleanup: remove stale Linux AppImages from ~/Applications/ ──
+	# Previous runs installed Linux AppImages (which can't run on macOS). Clean them up.
+	_known_emudeck_appimages=(
+		"DuckStation.AppImage" "Dolphin.AppImage" "RetroArch.AppImage"
+		"PPSSPP.AppImage" "mGBA.AppImage" "Cemu.AppImage" "azahar.AppImage"
+		"RPCS3.AppImage" "rpcs3.AppImage" "pcsx2-Qt.AppImage" "ES-DE.AppImage"
+		"EmulationStation-DE.AppImage" "melonDS.AppImage" "Flycast.AppImage"
+		"ares.AppImage" "ScummVM.AppImage" "MAME.AppImage" "xemu.AppImage"
+		"Vita3K.AppImage" "ShadPS4.AppImage" "RMG.AppImage" "Azahar.AppImage"
+	)
+	for _ai in "${_known_emudeck_appimages[@]}"; do
+		if [ -f "$HOME/Applications/$_ai" ]; then
+			echo "[EmuDeck] Removing stale Linux AppImage: $HOME/Applications/$_ai"
+			rm -f "$HOME/Applications/$_ai"
+		fi
+	done
+	# ─────────────────────────────────────────────────────────────────────────
 fi
 
 #

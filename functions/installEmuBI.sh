@@ -1,5 +1,10 @@
 #!/bin/bash
 installEmuBI(){
+    # macOS guard: Linux binary installs are not valid on macOS.
+    if [ "$(uname)" != "Linux" ]; then
+        echo "[ERROR] installEmuBI called on macOS for '${1:-unknown}' — Linux binaries cannot run on macOS."
+        return 1
+    fi
     local name="$1"
     local url="$2"
     local fileName="$3"

@@ -14,6 +14,8 @@ pegasus_cleanup(){
 
 #Install
 pegasus_install(){
+	# macOS: The dragoonDorise pegasus binary is Linux-only. Skip on macOS.
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Pegasus" "Linux binary — no macOS build in this source"; return 0; fi
 
 	setMSG "Installing $pegasus_toolName"
 	flatpak uninstall "$pegasus_emuPath" --user -y &> /dev/null;
@@ -29,7 +31,6 @@ pegasus_install(){
 	else
 		return 1
 	fi
-
 
 }
 

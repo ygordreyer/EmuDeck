@@ -8,6 +8,8 @@ BINUP_Shortcutlocation="$HOME/Desktop/EmuDeckBinUpdate.desktop"
 
 
 BINUP_install(){
+	# macOS: AppImage updater is Linux-only.
+	if [ "$(uname)" != "Linux" ]; then echo "[EmuDeck] Skipping BINUP — AppImage updater is Linux-only."; return 0; fi
 
 	rsync -avhp --mkpath "$emudeckBackend/tools/binupdate" "$toolsPath/"
 

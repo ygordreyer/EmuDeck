@@ -9,6 +9,8 @@ SRM_userConfigurations="$HOME/.config/steam-rom-manager/userData/userConfigurati
 #cleanupOlderThings
 
 SRM_install(){
+  # macOS: Steam ROM Manager is Linux-only (requires Steam for Linux). Skip on macOS.
+  if [ "$(uname)" != "Linux" ]; then mac_emu_skip "SteamROMManager" "Linux-only (requires Steam for Linux)"; return 0; fi
   setMSG "Installing Steam ROM Manager"
   local showProgress="$1"
 

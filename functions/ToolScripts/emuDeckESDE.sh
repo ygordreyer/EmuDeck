@@ -78,6 +78,8 @@ ESDE_uninstall(){
 
 #Install
 ESDE_install(){
+	# macOS: ES-DE has no native macOS build. Front-end is handled by the EmuDeck Electron app on macOS.
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "ES-DE" "No native macOS build — front-end is the EmuDeck Electron app"; return 0; fi
 	setMSG "Installing $ESDE_toolName"
 	mkdir -p $ESDE_toolLocation
 

@@ -1,5 +1,10 @@
 #!/bin/bash
 installEmuFP(){
+    # macOS guard: Flatpak is Linux-only. Per-emulator _install_mac must use mac_install_* instead.
+    if [ "$(uname)" != "Linux" ]; then
+        echo "[ERROR] installEmuFP called on macOS for '${1:-unknown}' — Flatpak is not available on macOS."
+        return 1
+    fi
 
 	local name="$1"
 	local ID="$2"

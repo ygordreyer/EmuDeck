@@ -14,6 +14,7 @@ Supermodel_cleanup(){
 
 #Install
 Supermodel_install(){
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Supermodel" "No native macOS Flatpak/AppImage — Linux-only"; return 0; fi
 	setMSG "Installing $Supermodel_emuName"
 	installEmuFP "${Supermodel_emuName}" "${Supermodel_emuPath}" "emulator" ""
 }

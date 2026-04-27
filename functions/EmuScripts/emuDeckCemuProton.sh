@@ -31,6 +31,7 @@ CemuProton_cleanup(){
 
 #Install
 CemuProton_install(){
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "CemuProton" "Linux/Proton-only — use native Cemu (emuDeckCemu) instead"; return 0; fi
 	setMSG "Installing $CemuProton_emuName"
 
 	local showProgress="$1"
