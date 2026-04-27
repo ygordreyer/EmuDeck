@@ -115,6 +115,11 @@ ESDE_addToSteam(){
 
 #ApplyInitialSettings
 ESDE_init(){
+	# ES-DE has no macOS native build; front-end is the EmuDeck Electron app on macOS.
+	if [ "$(uname)" != "Linux" ]; then
+		echo "[mac] SKIP ESDE_init — ES-DE not installed on macOS"
+		return 0
+	fi
 	setMSG "Setting up $ESDE_toolName"
 	ESDE_addToSteam
 	ESDE_migration

@@ -424,9 +424,9 @@ CHD_install &
 
 
 #
-#Fixes for 16:9 Screens
+#Fixes for 16:9 Screens (Linux-only — xrandr not available on macOS)
 #
-if [ "$doSetupRA" == "true" ]; then
+if [ "$(uname)" == "Linux" ] && [ "$doSetupRA" == "true" ]; then
 	if [ "$(getScreenAR)" == 169 ];then
 		nonDeck_169Screen
 	fi
@@ -453,13 +453,18 @@ if [ "$system" == "chimeraos" ]; then
 fi
 
 
-createDesktopIcons &
+# createDesktopIcons is Linux/XDG-only (guarded internally, but also skipped here)
+if [ "$(uname)" == "Linux" ]; then
+	createDesktopIcons &
+fi
 
-
-if [ "$controllerLayout" == "bayx" ] || [ "$controllerLayout" == "baxy" ] ; then
-	controllerLayout_BAYX &
-else
-	controllerLayout_ABXY &
+# controllerLayout_ABXY/BAYX touches Linux flatpak config paths — skip on macOS
+if [ "$(uname)" == "Linux" ]; then
+	if [ "$controllerLayout" == "bayx" ] || [ "$controllerLayout" == "baxy" ] ; then
+		controllerLayout_BAYX &
+	else
+		controllerLayout_ABXY &
+	fi
 fi
 
 #

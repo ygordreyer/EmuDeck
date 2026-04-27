@@ -1,5 +1,10 @@
 #!/bin/bash
 createDesktopIcons(){
+	# Desktop shortcuts (.desktop files + xdg-user-dir) are Linux-only. Skip on macOS.
+	if [ "$(uname)" != "Linux" ]; then
+		echo "[mac] SKIP createDesktopIcons — Linux/XDG only"
+		return 0
+	fi
 	local sandbox=""
 	local desktop=$(xdg-user-dir DESKTOP)
 	if command -v apt-get >/dev/null; then

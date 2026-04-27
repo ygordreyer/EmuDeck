@@ -80,17 +80,25 @@ checkInstalledEmus(){
 
 	for emu in "${emuList[@]}"
 	do
-		if ! ${emu}_IsInstalled; then
+		# Safe invocation: check function exists before calling; compare string output not exit code
+		local _emu_status="false"
+		if declare -f "${emu}_IsInstalled" > /dev/null 2>&1; then
+			_emu_status=$("${emu}_IsInstalled" 2>/dev/null || echo "false")
+		fi
+		if [ "$_emu_status" != "true" ]; then
 			errorOnInstall=true
 			errosOnInstallDetailed+="${emu}\n"
 		fi
 	done
 
-	if $errorOnInstall; then
+	# zenity is Linux/GTK-only — skip error dialog on macOS
+	if $errorOnInstall && [ "$(uname)" == "Linux" ]; then
 		text="$(printf "<b>We have found the following emulators were not installed:</b>\n\n ${errosOnInstallDetailed}\n\n You may try again, make sure your Internet Connection is working properly")"
 		zenity --error \
 		--title="EmuDeck" \
 		--width=400 \
 		--text="${text}" 2>/dev/null
+	elif $errorOnInstall; then
+		echo "[EmuDeck] Some emulators were not installed: ${errosOnInstallDetailed}"
 	fi
 }

@@ -79,6 +79,8 @@ Yuzu_install() {
 
 #ApplyInitialSettings
 Yuzu_init() {
+    # Yuzu is discontinued (Nintendo DMCA) — nothing to configure on macOS
+    if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Yuzu" "Project discontinued — Nintendo DMCA takedown"; return 0; fi
     echo "Begin Yuzu Init"
 
 	cp "$emudeckBackend/tools/launchers/yuzu.sh" "$toolsPath/launchers/yuzu.sh"

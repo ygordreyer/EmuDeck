@@ -22,6 +22,8 @@ Primehack_install() {
 
 #ApplyInitialSettings
 Primehack_init() {
+	# Primehack has no official macOS build — skip on macOS
+	if [ "$(uname)" != "Linux" ]; then mac_emu_skip "Primehack" "No official macOS build available"; return 0; fi
 	setMSG "Initializing $Primehack_emuName settings."
 	configEmuFP "${Primehack_emuName}" "${Primehack_emuPath}" "true"
 	Primehack_setupStorage

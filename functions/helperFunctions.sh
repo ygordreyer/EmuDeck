@@ -24,6 +24,8 @@ function stopLog(){
 }
 
 function getScreenAR(){
+	# xrandr is Linux-only. Return 0 (unknown) on macOS to skip resolution-dependent tweaks.
+	if [ "$(uname)" != "Linux" ]; then echo 0; return 0; fi
 	local productName
 	productName=$(getProductName)
 	case $productName in
@@ -567,7 +569,11 @@ function moveSaveFolder(){
 #
 #
 function createDesktopShortcut(){
-
+	# .desktop files and balooctl are Linux/KDE-only. Skip on macOS silently.
+	if [ "$(uname)" != "Linux" ]; then
+		echo "[mac] SKIP createDesktopShortcut — Linux/KDE only"
+		return 0
+	fi
 
 	local Shortcutlocation=$1
 	local name=$2
@@ -821,6 +827,11 @@ flushEmulatorLaunchers(){
 }
 
 addSteamInputCustomIcons() {
+	# Steam-for-Linux specific path — skip on macOS (no ~/.steam on macOS)
+	if [ "$(uname)" != "Linux" ]; then
+		echo "[mac] SKIP addSteamInputCustomIcons — Linux/Steam-for-Linux only"
+		return 0
+	fi
 	rsync -av "$emudeckBackend/configs/steam-input/Icons/" "$HOME/.steam/steam/tenfoot/resource/images/library/controller/binding_icons"
 }
 
@@ -836,6 +847,8 @@ getEmuInstallStatus() {
 }
 
 isFpInstalled(){
+	# flatpak is Linux-only — always return false on macOS
+	if [ "$(uname)" != "Linux" ]; then echo "false"; return 0; fi
 	flatPakID=$1
 	if (flatpak --columns=app list --user | grep -q "^$flatPakID$") || (flatpak --columns=app list --system | grep -q "^$flatPakID$"); then
 		echo "true"
