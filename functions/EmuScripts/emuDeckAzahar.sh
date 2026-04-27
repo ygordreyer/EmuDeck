@@ -28,19 +28,24 @@ Azahar_install(){
 
 Azahar_install_mac(){
 	setMSG "Installing Azahar (macOS)"
+	# Azahar releases ZIP bundles (not DMG). Asset names as of 2125.x:
+	#   azahar-macos-arm64-<ver>.zip   (native Apple Silicon)
+	#   azahar-macos-universal-<ver>.zip (fallback universal)
+	#   azahar-macos-x86_64-<ver>.zip  (Intel/Rosetta)
+	# NOTE: avoid azahar-libretro-macos-* — that's the RetroArch core, not standalone.
 	local arch
 	arch=$(mac_arch)
 	local url
 	if [ "$arch" = "arm64" ]; then
-		url=$(mac_get_gh_release_url "azahar-emu/azahar" "azahar-.*macos-arm64.*\.dmg" "azahar-.*macos.*\.dmg")
+		url=$(mac_get_gh_release_url "azahar-emu/azahar" "azahar-macos-arm64-.*\.zip" "azahar-macos-universal-.*\.zip")
 	else
-		url=$(mac_get_gh_release_url "azahar-emu/azahar" "azahar-.*macos-x86_64.*\.dmg" "azahar-.*macos.*\.dmg")
+		url=$(mac_get_gh_release_url "azahar-emu/azahar" "azahar-macos-x86_64-.*\.zip" "azahar-macos-universal-.*\.zip")
 	fi
 	if [ -z "$url" ]; then
 		echo "[mac] ERROR: Could not find Azahar macOS release."
 		return 1
 	fi
-	mac_install_dmg "Azahar" "$url" "Azahar.app" || return 1
+	mac_install_zip "Azahar" "$url" "Azahar.app" || return 1
 	mac_deploy_launcher "Azahar" "/Applications/Azahar.app"
 }
 

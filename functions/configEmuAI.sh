@@ -15,7 +15,8 @@ function configEmuAI(){
 
 	setMSG "Updating $emu $folderName using $overwrite"
 
-	rsync -avhp --mkpath $gitLocation/ $folderPath $overwrite
+	# Quote paths to handle spaces in macOS "Library/Application Support/..." paths
+	rsync -avhp --mkpath "$gitLocation/" "$folderPath" $overwrite
 
 
 }

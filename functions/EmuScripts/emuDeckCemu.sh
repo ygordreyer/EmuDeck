@@ -430,21 +430,16 @@ Cemu_install () {
 
 Cemu_install_mac(){
 	setMSG "Installing Cemu (macOS)"
-	local arch
-	arch=$(uname -m)
+	# Cemu only provides an x64 DMG for macOS (no arm64 native build as of v2.6).
+	# It runs via Rosetta 2 on Apple Silicon. Asset name: cemu-<ver>-macos-<build>-x64.dmg
+	echo "[mac] Note: Cemu macOS build is x64 only — runs via Rosetta 2 on Apple Silicon."
 	local url
-	if [ "$arch" = "arm64" ]; then
-		url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos-arm64\.zip" "cemu-.*macos.*\.zip")
-		echo "[mac] Note: Cemu macOS build is universal (arm64 native if available, otherwise x64 via Rosetta 2)."
-	else
-		url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos-x64\.zip" "cemu-.*macos.*\.zip")
-		echo "[mac] Note: Installing Cemu x64 macOS build."
-	fi
+	url=$(mac_get_gh_release_url "cemu-project/Cemu" "cemu-.*macos.*\.dmg" "cemu-.*\.dmg")
 	if [ -z "$url" ]; then
 		echo "[mac] ERROR: Could not find Cemu macOS release."
 		return 1
 	fi
-	mac_install_zip "Cemu" "$url" "Cemu.app" || return 1
+	mac_install_dmg "Cemu" "$url" "Cemu.app" || return 1
 	mac_deploy_launcher "cemu" "/Applications/Cemu.app"
 }
 

@@ -257,6 +257,14 @@ ESDE_setEmulationFolder(){
 	#update cemu custom system launcher to correct path by just replacing the line, if it exists.
 	echo "updating $es_systemsFile"
 
+	# xmlstarlet is not available on macOS (or when not installed).
+	# These calls add Proton-based emulator commands to es_systems.xml — not needed on macOS.
+	# Install on macOS with: brew install xmlstarlet
+	if ! command -v xmlstarlet >/dev/null 2>&1; then
+		echo "[EmuDeck] xmlstarlet not found — skipping custom systems XML editing."
+		return 0
+	fi
+
 	#insert new commands
 	if [[ ! $(grep -rnw "$es_systemsFile" -e 'wiiu') == "" ]]; then
 		if [[ $(grep -rnw "$es_systemsFile" -e 'Cemu (Native)') == "" ]]; then

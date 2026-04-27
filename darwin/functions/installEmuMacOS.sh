@@ -55,8 +55,9 @@ mac_install_cask() {
     setMSG "Installing ${name} (macOS)"
     echo "[mac] Installing ${name} via brew cask: ${caskId}"
 
-    # brew install --cask is idempotent; --no-quarantine removes the xattr at install time
-    if brew install --cask "$caskId" --no-quarantine 2>&1; then
+    # brew install --cask is idempotent.
+    # Note: --no-quarantine was removed from Homebrew; mac_unquarantine handles xattr removal after install.
+    if brew install --cask "$caskId" 2>&1; then
         echo "[mac] ${name} installed successfully."
         mac_unquarantine "/Applications/${appName}"
         return 0

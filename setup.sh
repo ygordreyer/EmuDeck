@@ -7,6 +7,7 @@
 emudeckBackend="$HOME/.config/EmuDeck/backend/"
 . "$emudeckBackend/vars.sh"
 MSG=$emudeckLogs/msg.log
+mkdir -p "$emudeckLogs"   # ensure log dir exists on first run
 echo "0" > "$MSG"
 
 #Darwin
